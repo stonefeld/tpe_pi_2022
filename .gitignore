@@ -1,0 +1,7 @@
+# carpetas
+build/
+
+# archivos
+*.csv
+*.o
+compile_flags.txt
