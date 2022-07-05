@@ -1,13 +1,26 @@
-#include "print_msg.h"
+#include "sensors.h"
+#include "utils.h"
 
 int
 main(int argc, char **argv)
 {
-    print_msg("Hello world");
+	FILE *f;
+	char stream[1024];
+	Sensors s = NULL;
 
-#if DEBUG
-    print_msg("Debugging");
-#endif
+	if (!(f = fopen(argv[1], "r")))
+		return 1;
+
+	fgets(stream, 1024, f);
+	while (1) {
+		if (fgets(stream, 1024, f) == NULL)
+			break;
+		s = sensors_add(s, stream);
+	}
+	fclose(f);
+	sensors_print(s);
+
+	sensors_free(s);
 
     return 0;
 }
