@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "logger.h"
 #include "sensors.h"
 #include "utils.h"
 
@@ -13,11 +14,20 @@ _sensors_add(Sensors self, unsigned int id, char *name)
 {
 	if (self == NULL || self->id > id) {
 		Sensors ret = malloc(sizeof(struct sensors_adt));
-		ret->id = id;
-		ret->name = malloc(strlen(name) + 1);
-		strcpy(ret->name, name);
-		ret->tail = self;
-		return ret;
+		if (errno == ENOMEM) {
+			log_error("No hay suficiente memoria");
+		} else {
+			ret->id = id;
+			ret->tail = self;
+
+			ret->name = malloc(strlen(name) + 1);
+			if (errno == ENOMEM)
+				log_error("No hay suficiente memoria");
+			else
+				strcpy(ret->name, name);
+
+			return ret;
+		}
 	} else {
 		self->tail = _sensors_add(self->tail, id, name);
 	}
@@ -25,22 +35,30 @@ _sensors_add(Sensors self, unsigned int id, char *name)
 }
 
 Sensors
-sensors_add(Sensors self, char *stream)
+sensors_add(Sensors self, const char *stream)
 {
 	unsigned int rows;
-	char **keys = parser_get(stream, &rows);
+	char *s = malloc(strlen(stream) + 1);
+	if (errno == ENOMEM) {
+		log_error("No hay suficiente memoria");
+	} else {
+		strcpy(s, stream);
+		char **keys = parser_get(s, &rows);
 
-	if (rows != SENSOR_KEYS)
-		printf("Warning: la cantidad de claves leídas en la línea no es correcta.\n");
+		if (rows != SENSOR_KEYS) {
+			log_error("La cantidad de claves leídas en la línea no es correcta.");
+		} else {
+			unsigned int id = atoi(keys[0]);
+			char *name = keys[1];
+			char status = keys[2][0];
 
-	unsigned int id = atoi(keys[0]);
-	char *name = keys[1];
-	char status = keys[2][0];
+			if (status == 'A')
+				self = _sensors_add(self, id, name);
+		}
 
-	if (status == 'A')
-		self = _sensors_add(self, id, name);
-
-	free(keys);
+		free(keys);
+	}
+	free(s);
 	return self;
 }
 
@@ -69,6 +87,15 @@ sensors_get_name(Sensors self, unsigned int id)
 			name = aux->name;
 			exists = 1;
 		}
+	}
+
+	if (!exists) {
+		name = malloc(1);
+		if (errno == ENOMEM) {
+			log_error("No hay suficiente memoria");
+			return NULL;
+		}
+		name[0] = '\0';
 	}
 
 	return name;
