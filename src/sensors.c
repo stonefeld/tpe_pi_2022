@@ -44,6 +44,36 @@ sensors_add(Sensors self, char *stream)
 	return self;
 }
 
+int
+sensor_exists(Sensors self, unsigned int id)
+{
+	int exists = 0;
+
+	for (Sensors aux = self; aux != NULL && !exists; aux = aux->tail)
+		if (aux->id == id)
+			exists = 1;
+
+	return exists;
+}
+
+char*
+sensors_get_name(Sensors self, unsigned int id)
+{
+	char *name;
+	int exists = 0;
+
+	// TODO(ts): pensar si conviene pasar el puntero al nombre o hacer una
+	// copia del mismo como retorno
+	for (Sensors aux = self; aux != NULL && !exists; aux = aux->tail) {
+		if (aux->id == id) {
+			name = aux->name;
+			exists = 1;
+		}
+	}
+
+	return name;
+}
+
 void
 sensors_free(Sensors self)
 {
@@ -54,6 +84,7 @@ sensors_free(Sensors self)
 	free(self);
 }
 
+// TODO(ts): borrar al final del proyecto
 void
 sensors_print(Sensors self)
 {
