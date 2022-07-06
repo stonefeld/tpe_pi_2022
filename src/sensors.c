@@ -123,12 +123,11 @@ sensors_get_name(Sensors self, unsigned int id, char *name)
 	return exists;
 }
 
-int
+void
 sensors_free(Sensors self)
 {
 	_sensors_free_rec(self->first);
 	free(self);
-	return 0;
 }
 
 // TODO(ts): borrar al final del proyecto

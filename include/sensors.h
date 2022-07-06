@@ -9,7 +9,7 @@ Sensors sensors_new(void);
 int sensors_add(Sensors self, const char *stream);
 int sensors_exists(Sensors self, unsigned int id);
 int sensors_get_name(Sensors self, unsigned int id, char *name);
-int sensors_free(Sensors self);
+void sensors_free(Sensors self);
 
 // TODO(ts): borrar al final del proyecto
 void sensors_print(Sensors self);
