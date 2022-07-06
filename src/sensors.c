@@ -107,7 +107,7 @@ sensors_exists(Sensors self, unsigned int id)
 }
 
 int
-sensors_get_name(Sensors self, unsigned int id, char *name)
+sensors_get_name(Sensors self, unsigned int id, char **name)
 {
 	int exists = 0;
 
@@ -115,7 +115,7 @@ sensors_get_name(Sensors self, unsigned int id, char *name)
 	// copia del mismo como retorno
 	for (struct sensor *aux = self->first; aux != NULL && !exists; aux = aux->tail) {
 		if (aux->id == id) {
-			name = aux->name;
+			*name = aux->name;
 			exists = 1;
 		}
 	}

@@ -70,18 +70,19 @@ query2_add(Query2 self, unsigned int year, unsigned int count)
 	return c;
 }
 
+Matrix
+query2_to_matrix(Query2 self, unsigned int *rows, unsigned int *cols)
+{
+	if (self == NULL)
+		return NULL;
+	*cols = QUERY2_COLS;
+	return list_tomatrix(self, (ListToString)_tostring, rows);
+}
+
 void
 query2_free(Query2 self)
 {
 	list_free(self);
-}
-
-Matrix
-query2_to_matrix(Query2 self, unsigned int *rows)
-{
-	if (self == NULL)
-		return NULL;
-	return list_tomatrix(self, (ListToString)_tostring, rows);
 }
 
 void

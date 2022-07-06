@@ -2,10 +2,9 @@
 #include "parser.h"
 #include "readings.h"
 #include "utils.h"
-#include "query2.h"
 
 struct readings_adt {
-	// Query1 query1;
+	Query1 query1;
 	Query2 query2;
 	unsigned int *queries;
 	unsigned int count;
@@ -20,7 +19,7 @@ readings_new(unsigned int *queries, unsigned int count)
 
 	for (int i = 0; i < count; i++) {
 		switch (queries[i]) {
-			// case 1: self->query1 = query1_new(); break;
+			case 1: self->query1 = query1_new(); break;
 			case 2: self->query2 = query2_new(); break;
 			default: log_warn("Query no definido"); break;
 		}
@@ -54,10 +53,10 @@ readings_add(Readings self, Sensors sensors, const char *stream)
 			unsigned int count = atoi(keys[6]);
 			char *name;
 
-			if (sensors_get_name(sensors, id, name)) {
+			if (sensors_get_name(sensors, id, &name)) {
 				for (int i = 0; i < self->count; i++) {
 					switch (self->queries[i]) {
-						// case 1: query1_add(self->query1, id, name, count); break;
+						case 1: query1_add(self->query1, id, name, count); break;
 						case 2: query2_add(self->query2, year, count); break;
 						default: log_warn("La query solicitada no existe. Se saltea"); break;
 					}
@@ -70,16 +69,34 @@ readings_add(Readings self, Sensors sensors, const char *stream)
 	return c;
 }
 
-int
+void
 readings_free(Readings self)
 {
 	for (int i = 0; i < self->count; i++) {
 		switch (self->queries[i]) {
+			case 1: query1_free(self->query1); break;
 			case 2: query2_free(self->query2); break;
 		}
 	}
 	free(self);
-	return 0;
+}
+
+void
+readings_free_matrix(Matrix mat, unsigned int rows, unsigned int cols)
+{
+	list_free_matrix(mat, rows, cols);
+}
+
+Matrix
+readings_get_matrix(Readings self, unsigned int query, unsigned int *rows, unsigned int *cols)
+{
+	Matrix ret;
+	switch (query) {
+		case 1: ret = query1_to_matrix(self->query1, rows, cols); break;
+		case 2: ret = query2_to_matrix(self->query2, rows, cols); break;
+		default: log_warn("El query solicitado para la matriz no existe. Se saltea"); break;
+	}
+	return ret;
 }
 
 void
@@ -87,6 +104,7 @@ readings_print(Readings self)
 {
 	for (int i = 0; i < self->count; i++) {
 		switch (self->queries[i]) {
+			case 1: query1_print(self->query1); break;
 			case 2: query2_print(self->query2); break;
 		}
 	}

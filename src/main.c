@@ -11,7 +11,7 @@ main(int argc, char **argv)
 	char stream[STREAM_LEN];
 	int c = 0;
 	Sensors s = sensors_new();
-	Readings r = readings_new((unsigned int[]){ 2 }, 1);
+	Readings r = readings_new((unsigned int[]){ 1, 2 }, 2);
 
 	if (!(f = fopen(argv[2], "r")))
 		return 1;
@@ -31,7 +31,15 @@ main(int argc, char **argv)
 		c = readings_add(r, s, stream);
 	fclose(f);
 
-	readings_print(r);
+	// readings_print(r);
+	unsigned int rows, cols;
+	Matrix q1 = readings_get_matrix(r, 1, &rows, &cols);
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < cols; j++)
+			printf("%20.20s\t", q1[i][j]);
+		putchar('\n');
+	}
+	readings_free_matrix(q1, rows, cols);
 
 	sensors_free(s);
 	readings_free(r);

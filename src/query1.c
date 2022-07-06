@@ -52,7 +52,7 @@ _tostring(struct query1 *q)
 {
 	char **ret = malloc(QUERY1_COLS * sizeof(char*));
 
-	ret[0] = malloc(strlen(q->name));
+	ret[0] = malloc(strlen(q->name) + 1);
 	ret[1] = malloc(BLOCK);
 
 	strcpy(ret[0], q->name);
@@ -80,17 +80,29 @@ query1_add(Query1 self, unsigned int id, char *name, unsigned int count)
 	return c;
 }
 
+Matrix
+query1_to_matrix(Query1 self, unsigned int *rows, unsigned int *cols)
+{
+	if (self == NULL)
+		return NULL;
+	*cols = QUERY1_COLS;
+	list_order(self, (ListOrderBy)_orderby);
+	return list_tomatrix(self, (ListToString)_tostring, rows);
+}
+
 void
 query1_free(Query1 self)
 {
 	list_free(self);
 }
 
-Matrix
-query1_to_matrix(Query1 self, unsigned int *rows)
+void
+query1_print(Query1 self)
 {
-	if ( self == NULL )
-		return NULL;
-	list_order(self, (ListOrderBy)_orderby);
-	return list_tomatrix(self, (ListToString)_tostring, rows);
+	struct query1 *n;
+	list_begin(self);
+	while (list_hasnext(self)) {
+		n = list_next(self);
+		printf("%d\t%.20s\t%d\n", n->id, n->name, n->count);
+	}
 }
