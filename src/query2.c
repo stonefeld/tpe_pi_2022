@@ -3,8 +3,9 @@
 #include "sensors.h"
 #include "readings.h"
 #include "utils.h"
+#include "query2.h"
 
-#define QUERY2_COLS
+#define QUERY2_COLS 2
 #define YEAR_LEN 5
 
 struct query2{
@@ -16,7 +17,7 @@ Query2 query2_new( void ){
 	return list_new();
 }
 
-//0 si no se pudo agregar, 1 si se pudo agregar, 2 si se actualizo
+//1 si no se pudo agregar, 0 si se pudo agregar
 int query2_add ( Query2 self, unsigned int year, unsigned int count ){
 	
 	struct query2 *q = malloc(sizeof(struct query2));
@@ -36,8 +37,7 @@ int query2_add ( Query2 self, unsigned int year, unsigned int count ){
 }
 
 int query2_compare( struct query2 *e1, struct query2 *e2 ){
-	int c = e1->year1 - e2->year2;
-	return c;
+	return e1->year1 - e2->year2;
 }
 
 int query2_ifequal( struct query2 *e1, struct query2 *e2 ){
@@ -49,7 +49,7 @@ int query2_ifequal( struct query2 *e1, struct query2 *e2 ){
 }
 
 int query2_free( Query2 self ){
-	return c = Listfree( Query2 self );
+	return Listfree( Query2 self );
 }
 
 Matrix query2_to_matrix( Query2 self ){
