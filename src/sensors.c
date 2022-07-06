@@ -1,5 +1,5 @@
-#include "parser.h"
 #include "logger.h"
+#include "parser.h"
 #include "sensors.h"
 #include "utils.h"
 
@@ -74,7 +74,7 @@ sensors_add(Sensors self, const char *stream)
 		char **keys = parser_get(s, &rows);
 
 		if (rows != SENSOR_KEYS) {
-			log_error("La cantidad de claves leídas en la línea no es correcta");
+			log_error("La cantidad de claves leidas en la linea no es correcta");
 			c = 1;
 		} else {
 			unsigned int id = atoi(keys[0]);
@@ -95,7 +95,7 @@ sensors_add(Sensors self, const char *stream)
 }
 
 int
-sensor_exists(Sensors self, unsigned int id)
+sensors_exists(Sensors self, unsigned int id)
 {
 	int exists = 0;
 
@@ -120,7 +120,7 @@ sensors_get_name(Sensors self, unsigned int id, char *name)
 		}
 	}
 
-	return 0;
+	return exists;
 }
 
 int
