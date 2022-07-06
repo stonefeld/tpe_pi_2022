@@ -5,10 +5,11 @@
 
 typedef struct sensors_adt *Sensors;
 
-Sensors sensors_add(Sensors self, const char *stream);
+Sensors sensors_new(void);
+int sensors_add(Sensors self, const char *stream);
 int sensor_exists(Sensors self, unsigned int id);
-char* sensors_get_name(Sensors self, unsigned int id);
-void sensors_free(Sensors self);
+int sensors_get_name(Sensors self, unsigned int id, char *name);
+int sensors_free(Sensors self);
 
 // TODO(ts): borrar al final del proyecto
 void sensors_print(Sensors self);
