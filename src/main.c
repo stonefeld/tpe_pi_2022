@@ -56,7 +56,10 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 			if (sensors_get_name(s, id, &name)) {
 				unsigned int year = atoi(tokens_readings[0]);
 				unsigned int count = atoi(tokens_readings[6]);
-				status = readings_add(r, id, name, year, count);
+				char* day = atoi(tokens_readings[4]);
+				unsigned short time = atoi(tokens_readings[5]);
+				unsigned short nday = _getnday(day);
+				status = readings_add(r, id, name, year, count, day, nday, time);
 				status = log_code(status);
 			}
 		}
@@ -64,6 +67,20 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 	fclose(f);
 
 	return status;
+}
+
+static unsigned short
+_getnday(char *day)
+{
+    char *days[WEEKDAYS] = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+	int nday;
+	
+	for (int i = 0; i < WEEKDAY; i++) {
+		if (strcmp(day, days[i]) == 0)
+    	nday = i;
+	}
+	
+	return nday;
 }
 
 int

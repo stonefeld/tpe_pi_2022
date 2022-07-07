@@ -5,6 +5,9 @@
 #define BLOCK 20
 #define QUERY1_COLS 2
 #define QUERY2_COLS 2
+#define QUERY3_COLS 4
 #define YEAR_LEN 5
+#define DAYS_LEN 10
+#define WEEKDAYS 7
 
 #endif // __CONFIG_H__
