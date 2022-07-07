@@ -4,9 +4,10 @@
 // #define TRACE
 
 typedef enum {
-	NOE = 0,   E_BADARGS, E_NOFILE,
-	E_NOMEM,   E_EMPLIST, W_NOTADD,
-	W_BADKEYS, I_UPDATED, I_ADDED
+	NOE = 0,   WARN,      ERROR,
+	E_BADARGS, E_NOFILE,  E_NOMEM,
+	E_EMPLIST, W_NOTADD,  W_BADKEYS,
+	W_NOQUERY, I_UPDATED, I_ADDED
 } ErrorCodes;
 
 void log_error(const char *log);
