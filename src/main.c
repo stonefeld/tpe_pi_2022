@@ -9,8 +9,26 @@
 #define READINGS_KEYS 7
 #define WEEKDAYS 7
 
+void dump_to_csv(char *filename, Matrix query, unsigned int rows, unsigned int cols, char *header);
 ErrorCodes read_files(Sensors s, Readings r, const char *sensors_path, const char *readings_path);
 unsigned short get_nday(char *day);
+
+void
+dump_to_csv(char *filename, Matrix query, unsigned int rows, unsigned int cols, char *header)
+{
+	int j;
+    FILE *f;
+
+    f = fopen(filename, "w+");
+	fprintf(f, "%s\n", header);
+
+    for (int i = 0; i < rows; i++){
+        for (j = 0; j < cols - 1; j++)
+            fprintf(f, "%s;", query[i][j]);
+        fprintf(f, "%s\n", query[i][j]);
+    }
+    fclose(f);
+}
 
 unsigned short
 get_nday(char *day)
@@ -37,7 +55,7 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 
 	// nos salteamos la primer linea con los headers
 	fgets(stream, STREAM_LEN, f);
-	while (fgets(stream, STREAM_LEN, f) != NULL) {
+	while (status != ERROR && fgets(stream, STREAM_LEN, f) != NULL) {
 		parser_get(stream, &keys, tokens_sensors, SENSORS_KEYS);
 
 		// verifico que la cantidad de columnas sea la correcta y que el status del
@@ -61,7 +79,7 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 
 	// nos salteamos la primer linea con los headers
 	fgets(stream, STREAM_LEN, f);
-	while (fgets(stream, STREAM_LEN, f) != NULL) {
+	while (status != ERROR && fgets(stream, STREAM_LEN, f) != NULL) {
 		parser_get(stream, &keys, tokens_readings, READINGS_KEYS);
 
 		// verifico que la cantidad de columnas sea la correcta y que el status del
@@ -92,6 +110,11 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 int
 main(int argc, char **argv)
 {
+	if (argc != 3) {
+		log_code(E_BADARGS);
+		return -1;
+	}
+
 	ErrorCodes code = 0;
 	Sensors s = sensors_new();
 	Readings r = readings_new((unsigned int[]){ 1, 2, 3 }, 3);
@@ -101,23 +124,34 @@ main(int argc, char **argv)
 	// sensors_print(s);
 	// readings_print(r);
 
-#if 0
 	unsigned int rows, cols;
 	Matrix q1 = NULL;
-	if (!readings_get_matrix(r, &q1, 1, &rows, &cols)) {
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++)
-				printf("%20.20s\t", q1[i][j]);
-			putchar('\n');
-		}
-	}
+	code = readings_get_matrix(r, &q1, 1, &rows, &cols);
+	code = log_code(code);
+	if (code == NOE)
+		dump_to_csv("query1.csv", q1, rows, cols, "sensors;counts");
 	readings_free_matrix(q1, rows, cols);
-#endif
-	readings_print(r);
+
+	Matrix q2 = NULL;
+	code = readings_get_matrix(r, &q2, 2, &rows, &cols);
+	code = log_code(code);
+	if (code == NOE)
+		dump_to_csv("query2.csv", q2, rows, cols, "year;counts");
+	readings_free_matrix(q2, rows, cols);
+
+	Matrix q3 = NULL;
+	code = readings_get_matrix(r, &q3, 3, &rows, &cols);
+	code = log_code(code);
+	if (code == NOE)
+		dump_to_csv("query3.csv", q3, rows, cols, "day;day_counts;night_counts;total_counts");
+	readings_free_matrix(q3, rows, cols);
+
+	// readings_print(r);
 
 	sensors_free(s);
 	readings_free(r);
 
-    return code;
+	if (code != NOE)
+		return -1;
+	return 0;
 }
-

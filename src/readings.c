@@ -25,7 +25,6 @@ readings_new(unsigned int *queries, unsigned int count)
 			case 1: self->query1 = query1_new(); break;
 			case 2: self->query2 = query2_new(); break;
 			case 3: self->query3 = query3_new(); break;
-			default: log_warn("Query no definido"); break;
 		}
 	}
 
@@ -41,7 +40,6 @@ readings_add(Readings self, unsigned int id, char *name, unsigned int year, char
 			case 1: status = query1_add(self->query1, id, name, count); break;
 			case 2: status = query2_add(self->query2, year, count); break;
 			case 3: status = query3_add(self->query3, day, nday, count, time); break;
-			default: log_warn("La query solicitada no existe. Se saltea"); break;
 		}
 	}
 	return status;
@@ -58,13 +56,12 @@ readings_get_matrix(Readings self, Matrix *mat, unsigned int query, unsigned int
 			exists = 1;
 
 	if (!exists)
-		return 1;
+		return W_NOQUERY;
 
 	switch (query) {
 		case 1: code = query1_tomatrix(self->query1, mat, rows, cols); break;
 		case 2: code = query2_tomatrix(self->query2, mat, rows, cols); break;
 		case 3: code = query3_tomatrix(self->query3, mat, rows, cols); break;
-		default: log_warn("El query solicitado para la matriz no existe. Se saltea"); break;
 	}
 	return code;
 }

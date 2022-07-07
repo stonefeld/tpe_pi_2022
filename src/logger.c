@@ -35,13 +35,13 @@ int
 log_code(ErrorCodes code)
 {
 	char *logs[] = {
-		"",
 		"Los argumentos recibidos son incorrectos",
 		"El archivo especificado no existe",
 		"No hay memoria suficiente",
 		"La lista esta vacia",
 		"El nodo no fue agregado",
 		"Mala cantidad de keys del csv",
+		"El query solicitado no existe",
 		"Nodo actualizado",
 		"Nodo agregado",
 	};
@@ -51,22 +51,26 @@ log_code(ErrorCodes code)
 		case I_UPDATED:
 		case I_ADDED: {
 #if DEBUG && TRACE
-			log_trace(logs[code]);
+			log_trace(logs[code - ERROR - 1]);
 #endif
 			code = NOE;
 		} break;
 
+		case ERROR:
 		case E_BADARGS:
 		case E_NOFILE:
 		case E_NOMEM:
 		case E_EMPLIST: {
-			log_error(logs[code]);
+			log_error(logs[code - ERROR - 1]);
+			code = ERROR;
 		} break;
 
+		case WARN:
 		case W_NOTADD:
-		case W_BADKEYS: {
-			log_warn(logs[code]);
-			code = NOE;
+		case W_BADKEYS:
+		case W_NOQUERY: {
+			log_warn(logs[code - ERROR - 1]);
+			code = WARN;
 		} break;
 	}
 
