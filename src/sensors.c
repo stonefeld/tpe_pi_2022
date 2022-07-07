@@ -30,7 +30,7 @@ _sensors_add(Sensors self, unsigned int id, char *name)
 	} else {
 		struct sensor *aux = self->first;
 		while (aux != NULL && !added) {
-			if (aux->id >= 0) {
+			if (aux->id > 0) {
 				ret->tail = aux->tail;
 				aux->tail = ret;
 				added = 1;

@@ -14,8 +14,8 @@ parser_get(char *stream, unsigned int *rows)
 		log_error("No hay suficiente memoria");
 	} else {
 		char delim[2] = ";";
-
 		char *token;
+
 		token = strtok(stream, delim);
 
 		while (token != NULL) {
