@@ -1,5 +1,6 @@
-#include "parser.h"
+#include "config.h"
 #include "logger.h"
+#include "parser.h"
 #include "sensors.h"
 #include "utils.h"
 
@@ -13,44 +14,60 @@ struct sensors_adt {
 	struct sensor *first;
 };
 
-static struct sensor* _sensors_add_rec(struct sensor *self, unsigned int id, char *name, char *added);
-static void _sensors_free_rec(struct sensor *self);
+static ErrorCodes _sensors_add(Sensors self, unsigned int id, char *name);
+static ErrorCodes _sensors_create_node(struct sensor **ret, unsigned int id, char *name);
 
-static struct sensor*
-_sensors_add_rec(struct sensor *self, unsigned int id, char *name, char *added)
+static ErrorCodes
+_sensors_add(Sensors self, unsigned int id, char *name)
 {
-	if (self == NULL || self->id > id) {
-		struct sensor *ret = malloc(sizeof(struct sensor));
-		if (errno == ENOMEM) {
-			log_error("No hay suficiente memoria");
+	ErrorCodes code;
+	struct sensor *ret;
+
+	code = _sensors_create_node(&ret, id, name);
+
+	if (code == NOE) {
+		char ready = 0;
+
+		if (self->first == NULL || self->first->id > id) {
+			ret->tail = self->first;
+			self->first = ret;
+			code = I_ADDED;
+			ready = 1;
 		} else {
-			ret->id = id;
-			ret->tail = self;
+			struct sensor *aux = self->first;
 
-			ret->name = malloc(strlen(name) + 1);
-			if (errno == ENOMEM)
-				log_warn("No hay suficiente memoria para guardar el nombre");
-			else
-				strcpy(ret->name, name);
-
-			*added = 1;
-
-			return ret;
+			while (aux != NULL && !ready) {
+				if (aux->id == id) {
+					ready = 1;
+				} else if (aux->tail == NULL || aux->tail->id > id) {
+					ret->tail = aux->tail;
+					aux->tail = ret;
+					code = I_ADDED;
+					ready = 1;
+				}
+				aux = aux->tail;
+			}
 		}
-	} else {
-		self->tail = _sensors_add_rec(self->tail, id, name, added);
+
+		if (code != I_ADDED)
+			free(ret);
 	}
-	return self;
+
+	return code;
 }
 
-static void
-_sensors_free_rec(struct sensor *self)
+static ErrorCodes
+_sensors_create_node(struct sensor **ret, unsigned int id, char *name)
 {
-	if (self == NULL)
-		return;
-	_sensors_free_rec(self->tail);
-	free(self->name);
-	free(self);
+	*ret = malloc(sizeof(struct sensor));
+	if (errno == ENOMEM)
+		return E_NOMEM;
+
+	(*ret)->id = id;
+	(*ret)->name = malloc(strlen(name) + 1);
+	strcpy((*ret)->name, name);
+	(*ret)->tail = NULL;
+	return NOE;
 }
 
 Sensors
@@ -60,42 +77,15 @@ sensors_new()
 }
 
 int
-sensors_add(Sensors self, const char *stream)
+sensors_add(Sensors self, unsigned int id, char *name)
 {
-	char *s = malloc(strlen(stream) + 1);
-	int c = 0;
-	unsigned int rows;
-
-	if (errno == ENOMEM) {
-		log_error("No hay suficiente memoria");
-		c = 1;
-	} else {
-		strcpy(s, stream);
-		char **keys = parser_get(s, &rows);
-
-		if (rows != SENSOR_KEYS) {
-			log_error("La cantidad de claves leídas en la línea no es correcta");
-			c = 1;
-		} else {
-			unsigned int id = atoi(keys[0]);
-			char *name = keys[1];
-			char status = keys[2][0];
-
-			if (status == 'A') {
-				char added = 0;
-				self->first = _sensors_add_rec(self->first, id, name, &added);
-				if (!added)
-					c = 1;
-			}
-		}
-		free(keys);
-	}
-	free(s);
-	return c;
+	if (_sensors_add(self, id, name))
+		return NOE;
+	return W_NOTADD;
 }
 
 int
-sensor_exists(Sensors self, unsigned int id)
+sensors_exists(Sensors self, unsigned int id)
 {
 	int exists = 0;
 
@@ -107,7 +97,7 @@ sensor_exists(Sensors self, unsigned int id)
 }
 
 int
-sensors_get_name(Sensors self, unsigned int id, char *name)
+sensors_get_name(Sensors self, unsigned int id, char **name)
 {
 	int exists = 0;
 
@@ -115,20 +105,25 @@ sensors_get_name(Sensors self, unsigned int id, char *name)
 	// copia del mismo como retorno
 	for (struct sensor *aux = self->first; aux != NULL && !exists; aux = aux->tail) {
 		if (aux->id == id) {
-			name = aux->name;
+			*name = aux->name;
 			exists = 1;
 		}
 	}
 
-	return 0;
+	return exists;
 }
 
-int
+void
 sensors_free(Sensors self)
 {
-	_sensors_free_rec(self->first);
+	struct sensor *aux;
+	while (self->first != NULL) {
+		aux = self->first;
+		self->first = self->first->tail;
+		free(aux->name);
+		free(aux);
+	}
 	free(self);
-	return 0;
 }
 
 // TODO(ts): borrar al final del proyecto
