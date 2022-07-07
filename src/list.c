@@ -102,6 +102,36 @@ list_next(List self)
 void
 list_order(List self, ListOrderBy orderby)
 {
+	struct node *min_prev;
+	struct node *min;
+	struct node *first = self->first;
+	struct node *last = NULL;
+	struct node *aux;
+
+	while (first != NULL) {
+		aux = first;
+		min = aux;
+		min_prev = NULL;
+
+		while (aux->tail != NULL) {
+			if (orderby(aux->tail->elem, min->elem) < 0) {
+				min_prev = aux;
+				min = aux->tail;
+			}
+			aux = aux->tail;
+		}
+
+		if (min == first)
+			first = first->tail;
+
+		if (min_prev != NULL)
+			min_prev->tail = min->tail;
+
+		min->tail = last;
+		last = min;
+	}
+
+	self->first = last;
 }
 
 ErrorCodes
@@ -114,10 +144,8 @@ list_tomatrix(List self, Matrix *mat, ListToString tostring, unsigned int *rows)
 	for (struct node *aux = self->first; aux != NULL && code == NOE; aux = aux->tail) {
 		if (*rows % BLOCK == 0) {
 			*mat = realloc(*mat, (*rows + BLOCK) * sizeof(char**));
-			if (errno == ENOMEM) {
-				log_error("No hay memoria suficiente");
+			if (errno == ENOMEM)
 				code = E_NOMEM;
-			}
 		}
 		if (code != E_NOMEM) {
 			code = tostring(&row, aux->elem);

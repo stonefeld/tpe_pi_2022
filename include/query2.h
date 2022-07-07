@@ -2,6 +2,7 @@
 #define __QUERY2_H__
 
 #include "list.h"
+#include "logger.h"
 
 typedef List Query2;
 

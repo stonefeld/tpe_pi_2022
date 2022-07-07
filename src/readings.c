@@ -19,6 +19,7 @@ readings_new(unsigned int *queries, unsigned int count)
 	self->queries = queries;
 	self->count = count;
 
+	// TODO(ts): cambiar para el default a un codigo de error.
 	for (int i = 0; i < count; i++) {
 		switch (queries[i]) {
 			case 1: self->query1 = query1_new(); break;
@@ -32,7 +33,7 @@ readings_new(unsigned int *queries, unsigned int count)
 }
 
 ErrorCodes
-readings_add(Readings self, unsigned int id, char *name, unsigned int year, unsigned int count, char* day, unsigned short nday, unsigned short time)
+readings_add(Readings self, unsigned int id, char *name, unsigned int year, char *day, unsigned int nday, unsigned int time, unsigned int count)
 {
 	int status = 0;
 	for (int i = 0; i < self->count; i++) {
@@ -44,6 +45,28 @@ readings_add(Readings self, unsigned int id, char *name, unsigned int year, unsi
 		}
 	}
 	return status;
+}
+
+ErrorCodes
+readings_get_matrix(Readings self, Matrix *mat, unsigned int query, unsigned int *rows, unsigned int *cols)
+{
+	ErrorCodes code;
+	char exists = 0;
+
+	for (int i = 0; i < self->count && !exists; i++)
+		if (self->queries[i] == query)
+			exists = 1;
+
+	if (!exists)
+		return 1;
+
+	switch (query) {
+		case 1: code = query1_tomatrix(self->query1, mat, rows, cols); break;
+		case 2: code = query2_tomatrix(self->query2, mat, rows, cols); break;
+		case 3: code = query3_tomatrix(self->query3, mat, rows, cols); break;
+		default: log_warn("El query solicitado para la matriz no existe. Se saltea"); break;
+	}
+	return code;
 }
 
 void
@@ -62,20 +85,9 @@ readings_free(Readings self)
 void
 readings_free_matrix(Matrix mat, unsigned int rows, unsigned int cols)
 {
+	if (mat == NULL)
+		return;
 	list_free_matrix(mat, rows, cols);
-}
-
-ErrorCodes
-readings_get_matrix(Readings self, Matrix *mat, unsigned int query, unsigned int *rows, unsigned int *cols)
-{
-	ErrorCodes code;
-	switch (query) {
-		case 1: code = query1_tomatrix(self->query1, mat, rows, cols); break;
-		case 2: code = query2_tomatrix(self->query2, mat, rows, cols); break;
-		case 3: code = query3_tomatrix(self->query3, mat, rows, cols); break;
-		default: log_warn("El query solicitado para la matriz no existe. Se saltea"); break;
-	}
-	return code;
 }
 
 void

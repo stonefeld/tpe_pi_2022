@@ -18,7 +18,7 @@ static ErrorCodes _tostring(char ***ret, struct query3 *q);
 static int
 _compare(struct query3 *e1, struct query3 *e2)
 {
-	return e1->nday - e2->nday;
+	return e2->nday - e1->nday;
 }
 
 static void
@@ -32,21 +32,21 @@ _ifequal(struct query3 *e1, struct query3 *e2)
 static ErrorCodes
 _tostring(char ***ret, struct query3 *q)
 {
-	*ret = malloc(QUERY3_COLS*sizeof(char*));
-	
+	*ret = malloc(QUERY3_COLS * sizeof(char*));
+
 	if (errno == ENOMEM)
 		return E_NOMEM;
-	
+
 	(*ret)[0] = malloc(DAYS_LEN);
 	(*ret)[1] = malloc(BLOCK);
 	(*ret)[2] = malloc(BLOCK);
 	(*ret)[3] = malloc(BLOCK);
-	
+
 	strcpy((*ret)[0], q->day);
 	sprintf((*ret)[1], "%d", q->day_count);
 	sprintf((*ret)[2], "%d", q->night_count);
 	sprintf((*ret)[3], "%d", q->count);
-	
+
 	return NOE;
 }
 
@@ -61,26 +61,28 @@ query3_add(Query3 self, char* day, unsigned short nday, unsigned int count, unsi
 {
 	ErrorCodes code;
 	struct query3 *q = malloc(sizeof(struct query3));
-	
+
 	if (errno == ENOMEM)
 		return E_NOMEM;
-	
+
 	strcpy(q->day, day);
-	q->count = count;
 	q->nday = nday;
-	
+	q->count = count;
+
 	if (time >= 6 && time <= 18){
-		q->day_count = day_count;
-	}else{
-		q->night_count = night_count;
+		q->day_count = count;
+		q->night_count = 0;
+	} else {
+		q->day_count = 0;
+		q->night_count = count;
 	}
-	
+
 	code = list_add(self, q, (ListCmp)_compare, (ListIfEqual)_ifequal);
-	
-	if(code == I_UPDATED)
+
+	if (code == I_UPDATED)
 		free(q);
-	
-	return q;
+
+	return code;
 }
 
 ErrorCodes
@@ -106,6 +108,6 @@ query3_print(Query3 self)
 	list_begin(self);
 	while (list_hasnext(self)) {
 		n = list_next(self);
-		printf("%.10s\t%d\t%d\t%d\n", n->day, n->day_count, n->night_count, n->count);
+		printf("%10.10s\t%d\t%d\t%d\n", n->day, n->day_count, n->night_count, n->count);
 	}
 }

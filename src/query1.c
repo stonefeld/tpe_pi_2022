@@ -102,6 +102,6 @@ query1_print(Query1 self)
 	list_begin(self);
 	while (list_hasnext(self)) {
 		n = list_next(self);
-		printf("%d\t%.20s\t%d\n", n->id, n->name, n->count);
+		printf("%d\t%20.20s\t%d\n", n->id, n->name, n->count);
 	}
 }
