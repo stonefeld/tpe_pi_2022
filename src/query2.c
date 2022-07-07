@@ -1,14 +1,7 @@
-#include "list.h"
+#include "config.h"
 #include "logger.h"
-#include "parser.h"
 #include "query2.h"
-#include "readings.h"
-#include "sensors.h"
 #include "utils.h"
-#include "query2.h"
-
-#define QUERY2_COLS 2
-#define YEAR_LEN 5
 
 struct query2 {
 	unsigned int year;
@@ -29,7 +22,6 @@ static int
 _ifequal(struct query2 *e1, struct query2 *e2)
 {
 	e1->count += e2->count;
-	free(e2);
 	return 0;
 }
 
@@ -66,12 +58,16 @@ query2_add(Query2 self, unsigned int year, unsigned int count)
 		q->year = year;
 		q->count = count;
 		c = list_add(self, q, (ListCmp)_compare, (ListIfEqual)_ifequal);
+		if (c == 2) {
+			free(q);
+			c = 0;
+		}
 	}
 	return c;
 }
 
 Matrix
-query2_to_matrix(Query2 self, unsigned int *rows, unsigned int *cols)
+query2_tomatrix(Query2 self, unsigned int *rows, unsigned int *cols)
 {
 	if (self == NULL)
 		return NULL;

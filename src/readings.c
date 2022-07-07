@@ -1,3 +1,4 @@
+#include "config.h"
 #include "logger.h"
 #include "parser.h"
 #include "readings.h"
@@ -31,7 +32,7 @@ readings_new(unsigned int *queries, unsigned int count)
 int
 readings_add(Readings self, Sensors sensors, const char *stream)
 {
-	char *s = malloc(strlen(stream) + 1);
+	char s[BUF_SIZE];
 	int c = 0;
 	unsigned int rows;
 
@@ -58,14 +59,14 @@ readings_add(Readings self, Sensors sensors, const char *stream)
 					switch (self->queries[i]) {
 						case 1: query1_add(self->query1, id, name, count); break;
 						case 2: query2_add(self->query2, year, count); break;
-						default: log_warn("La query solicitada no existe. Se saltea"); break;
+						// default: log_warn("La query solicitada no existe. Se saltea"); break;
 					}
 				}
 			}
 		}
 		free(keys);
 	}
-	free(s);
+	// free(s);
 	return c;
 }
 
@@ -92,8 +93,8 @@ readings_get_matrix(Readings self, unsigned int query, unsigned int *rows, unsig
 {
 	Matrix ret;
 	switch (query) {
-		case 1: ret = query1_to_matrix(self->query1, rows, cols); break;
-		case 2: ret = query2_to_matrix(self->query2, rows, cols); break;
+		case 1: ret = query1_tomatrix(self->query1, rows, cols); break;
+		case 2: ret = query2_tomatrix(self->query2, rows, cols); break;
 		default: log_warn("El query solicitado para la matriz no existe. Se saltea"); break;
 	}
 	return ret;

@@ -1,3 +1,4 @@
+#include "config.h"
 #include "logger.h"
 #include "parser.h"
 #include "sensors.h"
@@ -13,44 +14,51 @@ struct sensors_adt {
 	struct sensor *first;
 };
 
-static struct sensor* _sensors_add_rec(struct sensor *self, unsigned int id, char *name, char *added);
-static void _sensors_free_rec(struct sensor *self);
+static int _sensors_add(Sensors self, unsigned int id, char *name);
+static struct sensor* _sensors_create_node(unsigned int id, char *name);
 
-static struct sensor*
-_sensors_add_rec(struct sensor *self, unsigned int id, char *name, char *added)
+static int
+_sensors_add(Sensors self, unsigned int id, char *name)
 {
-	if (self == NULL || self->id > id) {
-		struct sensor *ret = malloc(sizeof(struct sensor));
-		if (errno == ENOMEM) {
-			log_error("No hay suficiente memoria");
-		} else {
-			ret->id = id;
-			ret->tail = self;
+	char added = 0;
 
-			ret->name = malloc(strlen(name) + 1);
-			if (errno == ENOMEM)
-				log_warn("No hay suficiente memoria para guardar el nombre");
-			else
-				strcpy(ret->name, name);
-
-			*added = 1;
-
-			return ret;
-		}
+	struct sensor *ret = _sensors_create_node(id, name);
+	if (self->first == NULL || self->first->id < id) {
+		ret->tail = self->first;
+		self->first = ret;
+		added = 1;
 	} else {
-		self->tail = _sensors_add_rec(self->tail, id, name, added);
+		struct sensor *aux = self->first;
+		while (aux != NULL && !added) {
+			if (aux->id >= 0) {
+				ret->tail = aux->tail;
+				aux->tail = ret;
+				added = 1;
+			}
+			aux = aux->tail;
+		}
 	}
-	return self;
+
+	if (!added)
+		free(ret);
+
+	return added;
 }
 
-static void
-_sensors_free_rec(struct sensor *self)
+static struct sensor*
+_sensors_create_node(unsigned int id, char *name)
 {
-	if (self == NULL)
-		return;
-	_sensors_free_rec(self->tail);
-	free(self->name);
-	free(self);
+	struct sensor *ret = malloc(sizeof(struct sensor));
+	if (errno == ENOMEM) {
+		log_error("No hay suficiente memoria");
+		free(ret);
+		return NULL;
+	}
+	ret->id = id;
+	ret->name = malloc(strlen(name) + 1);
+	strcpy(ret->name, name);
+	ret->tail = NULL;
+	return ret;
 }
 
 Sensors
@@ -62,7 +70,7 @@ sensors_new()
 int
 sensors_add(Sensors self, const char *stream)
 {
-	char *s = malloc(strlen(stream) + 1);
+	char s[BUF_SIZE];
 	int c = 0;
 	unsigned int rows;
 
@@ -81,16 +89,11 @@ sensors_add(Sensors self, const char *stream)
 			char *name = keys[1];
 			char status = keys[2][0];
 
-			if (status == 'A') {
-				char added = 0;
-				self->first = _sensors_add_rec(self->first, id, name, &added);
-				if (!added)
-					c = 1;
-			}
+			if (status == 'A')
+				_sensors_add(self, id, name);
 		}
 		free(keys);
 	}
-	free(s);
 	return c;
 }
 
@@ -126,7 +129,13 @@ sensors_get_name(Sensors self, unsigned int id, char **name)
 void
 sensors_free(Sensors self)
 {
-	_sensors_free_rec(self->first);
+	struct sensor *aux;
+	while (self->first != NULL) {
+		aux = self->first;
+		self->first = self->first->tail;
+		free(aux->name);
+		free(aux);
+	}
 	free(self);
 }
 

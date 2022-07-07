@@ -32,6 +32,7 @@ main(int argc, char **argv)
 	fclose(f);
 
 	// readings_print(r);
+#if 0
 	unsigned int rows, cols;
 	Matrix q1 = readings_get_matrix(r, 1, &rows, &cols);
 	for (int i = 0; i < rows; i++) {
@@ -40,6 +41,7 @@ main(int argc, char **argv)
 		putchar('\n');
 	}
 	readings_free_matrix(q1, rows, cols);
+#endif
 
 	sensors_free(s);
 	readings_free(r);

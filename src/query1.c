@@ -1,11 +1,7 @@
+#include "config.h"
 #include "logger.h"
-#include "parser.h"
-#include "sensors.h"
-#include "readings.h"
-#include "utils.h"
 #include "query1.h"
-
-#define QUERY1_COLS 2
+#include "utils.h"
 
 struct query1 {
 	char* name;
@@ -34,7 +30,6 @@ static int
 _ifequal(struct query1 *e1, struct query1 *e2)
 {
 	e1->count += e2->count;
-	free(e2);
 	return 0;
 }
 
@@ -75,13 +70,17 @@ query1_add(Query1 self, unsigned int id, char *name, unsigned int count)
 		q->count = count;
 		q->id = id;
 		c = list_add( self, q, (ListCmp)_compare, (ListIfEqual)_ifequal);
+		if (c == 2) {
+			free(q);
+			c = 0;
+		}
 	}
 
 	return c;
 }
 
 Matrix
-query1_to_matrix(Query1 self, unsigned int *rows, unsigned int *cols)
+query1_tomatrix(Query1 self, unsigned int *rows, unsigned int *cols)
 {
 	if (self == NULL)
 		return NULL;

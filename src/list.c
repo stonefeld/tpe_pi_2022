@@ -12,39 +12,20 @@ struct list_adt {
 	struct node *iter;
 };
 
-static struct node* _list_add_rec(struct node *self, void *elem, ListCmp compare, ListIfEqual ifequal, char *added);
-static void _list_free_rec(struct node *self);
+static struct node* _list_create_node(void *elem);
 
 static struct node*
-_list_add_rec(struct node *self, void *elem, ListCmp compare, ListIfEqual ifequal, char *added)
+_list_create_node(void *elem)
 {
-	int n;
-	if (self == NULL || (n = compare(self->elem, elem)) < 0) {
-		struct node *ret = malloc(sizeof(struct node));
-		if (errno == ENOMEM) {
-			log_error("No hay suficiente memoria");
-		} else {
-			ret->elem = elem;
-			ret->tail = self;
-			*added = 1;
-			return ret;
-		}
-	} else if (n == 0) {
-		ifequal(self->elem, elem);
-	} else {
-		self->tail = _list_add_rec(self->tail, elem, compare, ifequal, added);
+	struct node *ret = malloc(sizeof(struct node));
+	if (errno == ENOMEM) {
+		log_error("No hay suficiente memoria");
+		free(ret);
+		return NULL;
 	}
-	return self;
-}
-
-static void
-_list_free_rec(struct node *self)
-{
-	if (self == NULL)
-		return;
-	_list_free_rec(self->tail);
-	free(self->elem);
-	free(self);
+	ret->elem = elem;
+	ret->tail = NULL;
+	return ret;
 }
 
 List
@@ -61,9 +42,32 @@ list_new()
 int
 list_add(List self, void *elem, ListCmp compare, ListIfEqual ifequal)
 {
-	char added = 0;
-	self->first = _list_add_rec(self->first, elem, compare, ifequal, &added);
-	return !added;
+	char status = 0;
+
+	struct node *ret = _list_create_node(elem);
+	if (self->first == NULL || compare(self->first->elem, elem) < 0) {
+		ret->tail = self->first;
+		self->first = ret;
+		status = 1;
+	} else {
+		struct node *aux = self->first;
+		while (aux != NULL && !status) {
+			if (compare(aux->elem, elem) == 0) {
+				ifequal(aux->elem, elem);
+				status = 2;
+			} else if (aux->tail == NULL || compare(aux->tail->elem, elem) < 0) {
+				ret->tail = aux->tail;
+				aux->tail = ret;
+				status = 1;
+			}
+			aux = aux->tail;
+		}
+	}
+
+	if (status != 1)
+		free(ret);
+
+	return status;
 }
 
 void
@@ -117,7 +121,13 @@ list_tomatrix(List self, ListToString tostring, unsigned int *rows)
 void
 list_free(List self)
 {
-	_list_free_rec(self->first);
+	struct node *aux;
+	while (self->first != NULL) {
+		aux = self->first;
+		self->first = self->first->tail;
+		free(aux->elem);
+		free(aux);
+	}
 	free(self);
 }
 
