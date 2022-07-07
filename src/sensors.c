@@ -14,51 +14,60 @@ struct sensors_adt {
 	struct sensor *first;
 };
 
-static int _sensors_add(Sensors self, unsigned int id, char *name);
-static struct sensor* _sensors_create_node(unsigned int id, char *name);
+static ErrorCodes _sensors_add(Sensors self, unsigned int id, char *name);
+static ErrorCodes _sensors_create_node(struct sensor **ret, unsigned int id, char *name);
 
-static int
+static ErrorCodes
 _sensors_add(Sensors self, unsigned int id, char *name)
 {
-	char added = 0;
+	ErrorCodes code;
+	struct sensor *ret;
 
-	struct sensor *ret = _sensors_create_node(id, name);
-	if (self->first == NULL || self->first->id < id) {
-		ret->tail = self->first;
-		self->first = ret;
-		added = 1;
-	} else {
-		struct sensor *aux = self->first;
-		while (aux != NULL && !added) {
-			if (aux->id > 0) {
-				ret->tail = aux->tail;
-				aux->tail = ret;
-				added = 1;
+	code = _sensors_create_node(&ret, id, name);
+
+	if (code == NOE) {
+		char ready = 0;
+
+		if (self->first == NULL || self->first->id > id) {
+			ret->tail = self->first;
+			self->first = ret;
+			code = I_ADDED;
+			ready = 1;
+		} else {
+			struct sensor *aux = self->first;
+
+			while (aux != NULL && !ready) {
+				if (aux->id == id) {
+					ready = 1;
+				} else if (aux->tail == NULL || aux->tail->id > id) {
+					ret->tail = aux->tail;
+					aux->tail = ret;
+					code = I_ADDED;
+					ready = 1;
+				}
+				aux = aux->tail;
 			}
-			aux = aux->tail;
 		}
+
+		if (code != I_ADDED)
+			free(ret);
 	}
 
-	if (!added)
-		free(ret);
-
-	return added;
+	return code;
 }
 
-static struct sensor*
-_sensors_create_node(unsigned int id, char *name)
+static ErrorCodes
+_sensors_create_node(struct sensor **ret, unsigned int id, char *name)
 {
-	struct sensor *ret = malloc(sizeof(struct sensor));
-	if (errno == ENOMEM) {
-		log_error("No hay suficiente memoria");
-		free(ret);
-		return NULL;
-	}
-	ret->id = id;
-	ret->name = malloc(strlen(name) + 1);
-	strcpy(ret->name, name);
-	ret->tail = NULL;
-	return ret;
+	*ret = malloc(sizeof(struct sensor));
+	if (errno == ENOMEM)
+		return E_NOMEM;
+
+	(*ret)->id = id;
+	(*ret)->name = malloc(strlen(name) + 1);
+	strcpy((*ret)->name, name);
+	(*ret)->tail = NULL;
+	return NOE;
 }
 
 Sensors
@@ -68,33 +77,11 @@ sensors_new()
 }
 
 int
-sensors_add(Sensors self, const char *stream)
+sensors_add(Sensors self, unsigned int id, char *name)
 {
-	char s[BUF_SIZE];
-	int c = 0;
-	unsigned int rows;
-
-	if (errno == ENOMEM) {
-		log_error("No hay suficiente memoria");
-		c = 1;
-	} else {
-		strcpy(s, stream);
-		char **keys = parser_get(s, &rows);
-
-		if (rows != SENSOR_KEYS) {
-			log_error("La cantidad de claves leidas en la linea no es correcta");
-			c = 1;
-		} else {
-			unsigned int id = atoi(keys[0]);
-			char *name = keys[1];
-			char status = keys[2][0];
-
-			if (status == 'A')
-				_sensors_add(self, id, name);
-		}
-		free(keys);
-	}
-	return c;
+	if (_sensors_add(self, id, name))
+		return NOE;
+	return W_NOTADD;
 }
 
 int

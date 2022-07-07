@@ -29,45 +29,18 @@ readings_new(unsigned int *queries, unsigned int count)
 	return self;
 }
 
-int
-readings_add(Readings self, Sensors sensors, const char *stream)
+ErrorCodes
+readings_add(Readings self, unsigned int id, char *name, unsigned int year, unsigned int count)
 {
-	char s[BUF_SIZE];
-	int c = 0;
-	unsigned int rows;
-
-	if (errno == ENOMEM) {
-		log_error("No hay suficiente memoria");
-		c = 1;
-	} else {
-		strcpy(s, stream);
-		char **keys = parser_get(s, &rows);
-
-		if (rows != READING_KEYS) {
-			log_error("La cantidad de claves leidas en la linea no es correcta");
-			c = 1;
-		} else {
-			unsigned int id = atoi(keys[4]);
-			char *name;
-
-			if (sensors_get_name(sensors, id, &name)) {
-				unsigned int year = atoi(keys[0]);
-				char *wday = keys[3];
-				unsigned int time = atoi(keys[5]);
-				unsigned int count = atoi(keys[6]);
-
-				for (int i = 0; i < self->count; i++) {
-					switch (self->queries[i]) {
-						case 1: query1_add(self->query1, id, name, count); break;
-						case 2: query2_add(self->query2, year, count); break;
-						default: log_warn("La query solicitada no existe. Se saltea"); break;
-					}
-				}
-			}
+	int status = 0;
+	for (int i = 0; i < self->count; i++) {
+		switch (self->queries[i]) {
+			case 1: status = query1_add(self->query1, id, name, count); break;
+			case 2: status = query2_add(self->query2, year, count); break;
+			default: log_warn("La query solicitada no existe. Se saltea"); break;
 		}
-		free(keys);
 	}
-	return c;
+	return status;
 }
 
 void
@@ -88,16 +61,16 @@ readings_free_matrix(Matrix mat, unsigned int rows, unsigned int cols)
 	list_free_matrix(mat, rows, cols);
 }
 
-Matrix
-readings_get_matrix(Readings self, unsigned int query, unsigned int *rows, unsigned int *cols)
+ErrorCodes
+readings_get_matrix(Readings self, Matrix *mat, unsigned int query, unsigned int *rows, unsigned int *cols)
 {
-	Matrix ret;
+	ErrorCodes code;
 	switch (query) {
-		case 1: ret = query1_tomatrix(self->query1, rows, cols); break;
-		case 2: ret = query2_tomatrix(self->query2, rows, cols); break;
+		case 1: code = query1_tomatrix(self->query1, mat, rows, cols); break;
+		case 2: code = query2_tomatrix(self->query2, mat, rows, cols); break;
 		default: log_warn("El query solicitado para la matriz no existe. Se saltea"); break;
 	}
-	return ret;
+	return code;
 }
 
 void

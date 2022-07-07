@@ -9,16 +9,10 @@ struct query1 {
 	unsigned int count;
 };
 
-Query1
-query1_new()
-{
-	return list_new();
-}
-
 static int _compare(struct query1 *e1, struct query1 *e2);
-static int _ifequal(struct query1 *e1, struct query1 *e2);
+static void _ifequal(struct query1 *e1, struct query1 *e2);
 static int _orderby(struct query1 *e1, struct query1 *e2);
-static char** _tostring(struct query1 *q);
+static ErrorCodes _tostring(char ***ret, struct query1 *q);
 
 static int
 _compare(struct query1 *e1, struct query1 *e2)
@@ -26,11 +20,10 @@ _compare(struct query1 *e1, struct query1 *e2)
 	return e1->id - e2->id;
 }
 
-static int
+static void
 _ifequal(struct query1 *e1, struct query1 *e2)
 {
 	e1->count += e2->count;
-	return 0;
 }
 
 static int
@@ -42,51 +35,58 @@ _orderby(struct query1 *e1, struct query1 *e2)
 	return n;
 }
 
-static char**
-_tostring(struct query1 *q)
+static ErrorCodes
+_tostring(char ***ret, struct query1 *q)
 {
-	char **ret = malloc(QUERY1_COLS * sizeof(char*));
+	*ret = malloc(QUERY1_COLS * sizeof(char*));
 
-	ret[0] = malloc(strlen(q->name) + 1);
-	ret[1] = malloc(BLOCK);
+	if (errno == ENOMEM)
+		return E_NOMEM;
 
-	strcpy(ret[0], q->name);
-	sprintf(ret[1], "%d", q->count);
+	(*ret)[0] = malloc(strlen(q->name) + 1);
+	(*ret)[1] = malloc(BLOCK);
 
-	return ret;
+	strcpy((*ret)[0], q->name);
+	sprintf((*ret)[1], "%d", q->count);
+
+	return NOE;
 }
 
-int
+Query1
+query1_new()
+{
+	return list_new();
+}
+
+ErrorCodes
 query1_add(Query1 self, unsigned int id, char *name, unsigned int count)
 {
+	ErrorCodes code;
 	struct query1 *q = malloc(sizeof(struct query1));
-	int c = 0;
 
-	if (errno == ENOMEM) {
-		log_error("No hay suficiente memoria");
-		c = 1;
-	} else {
-		q->name = name;
-		q->count = count;
-		q->id = id;
-		c = list_add( self, q, (ListCmp)_compare, (ListIfEqual)_ifequal);
-		if (c == 2) {
-			free(q);
-			c = 0;
-		}
-	}
+	if (errno == ENOMEM)
+		return E_NOMEM;
 
-	return c;
+	q->name = name;
+	q->count = count;
+	q->id = id;
+	code = list_add( self, q, (ListCmp)_compare, (ListIfEqual)_ifequal);
+
+	if (code == I_UPDATED)
+		free(q);
+
+	return code;
 }
 
-Matrix
-query1_tomatrix(Query1 self, unsigned int *rows, unsigned int *cols)
+ErrorCodes
+query1_tomatrix(Query1 self, Matrix *mat, unsigned int *rows, unsigned int *cols)
 {
 	if (self == NULL)
-		return NULL;
+		return E_EMPLIST;
+
 	*cols = QUERY1_COLS;
 	list_order(self, (ListOrderBy)_orderby);
-	return list_tomatrix(self, (ListToString)_tostring, rows);
+	return list_tomatrix(self, mat, (ListToString)_tostring, rows);
 }
 
 void

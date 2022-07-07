@@ -9,8 +9,8 @@ struct query2 {
 };
 
 static int _compare(struct query2 *e1, struct query2 *e2);
-static int _ifequal(struct query2 *e1, struct query2 *e2);
-static char** _tostring(struct query2 *q);
+static void _ifequal(struct query2 *e1, struct query2 *e2);
+static ErrorCodes _tostring(char ***ret, struct query2 *q);
 
 static int
 _compare(struct query2 *e1, struct query2 *e2)
@@ -18,25 +18,27 @@ _compare(struct query2 *e1, struct query2 *e2)
 	return e1->year - e2->year;
 }
 
-static int
+static void
 _ifequal(struct query2 *e1, struct query2 *e2)
 {
 	e1->count += e2->count;
-	return 0;
 }
 
-static char**
-_tostring(struct query2 *q)
+static ErrorCodes
+_tostring(char ***ret, struct query2 *q)
 {
-	char **ret = malloc(QUERY2_COLS * sizeof(char*));
+	*ret = malloc(QUERY2_COLS * sizeof(char*));
 
-	ret[0] = malloc(YEAR_LEN);
-	ret[1] = malloc(BLOCK);
+	if (errno == ENOMEM)
+		return E_NOMEM;
 
-	sprintf(ret[0], "%d", q->year);
-	sprintf(ret[1], "%d", q->count);
+	(*ret)[0] = malloc(YEAR_LEN);
+	(*ret)[1] = malloc(BLOCK);
 
-	return ret;
+	sprintf((*ret)[0], "%d", q->year);
+	sprintf((*ret)[1], "%d", q->count);
+
+	return NOE;
 }
 
 Query2
@@ -45,34 +47,33 @@ query2_new()
 	return list_new();
 }
 
-int
+ErrorCodes
 query2_add(Query2 self, unsigned int year, unsigned int count)
 {
+	ErrorCodes code;
 	struct query2 *q = malloc(sizeof(struct query2));
-	int c = 0;
 
-	if (errno == ENOMEM) {
-		log_error("No hay suficiente memoria");
-		c = 1;
-	} else {
-		q->year = year;
-		q->count = count;
-		c = list_add(self, q, (ListCmp)_compare, (ListIfEqual)_ifequal);
-		if (c == 2) {
-			free(q);
-			c = 0;
-		}
-	}
-	return c;
+	if (errno == ENOMEM)
+		return E_NOMEM;
+
+	q->year = year;
+	q->count = count;
+	code = list_add(self, q, (ListCmp)_compare, (ListIfEqual)_ifequal);
+
+	if (code == I_UPDATED)
+		free(q);
+
+	return code;
 }
 
-Matrix
-query2_tomatrix(Query2 self, unsigned int *rows, unsigned int *cols)
+ErrorCodes
+query2_tomatrix(Query2 self, Matrix *mat, unsigned int *rows, unsigned int *cols)
 {
 	if (self == NULL)
-		return NULL;
+		return E_EMPLIST;
+
 	*cols = QUERY2_COLS;
-	return list_tomatrix(self, (ListToString)_tostring, rows);
+	return list_tomatrix(self, mat, (ListToString)_tostring, rows);
 }
 
 void

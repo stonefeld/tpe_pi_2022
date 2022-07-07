@@ -1,5 +1,5 @@
+#include "config.h"
 #include "list.h"
-#include "logger.h"
 #include "utils.h"
 
 struct node {
@@ -12,20 +12,20 @@ struct list_adt {
 	struct node *iter;
 };
 
-static struct node* _list_create_node(void *elem);
+static ErrorCodes _list_create_node(struct node **ret, void *elem);
 
-static struct node*
-_list_create_node(void *elem)
+static ErrorCodes
+_list_create_node(struct node **ret, void *elem)
 {
-	struct node *ret = malloc(sizeof(struct node));
+	*ret = malloc(sizeof(struct node));
 	if (errno == ENOMEM) {
 		log_error("No hay suficiente memoria");
 		free(ret);
-		return NULL;
+		return E_NOMEM;
 	}
-	ret->elem = elem;
-	ret->tail = NULL;
-	return ret;
+	(*ret)->elem = elem;
+	(*ret)->tail = NULL;
+	return NOE;
 }
 
 List
@@ -39,35 +39,44 @@ list_new()
 	return ret;
 }
 
-int
+ErrorCodes
 list_add(List self, void *elem, ListCmp compare, ListIfEqual ifequal)
 {
-	char status = 0;
+	ErrorCodes code;
+	struct node *ret;
 
-	struct node *ret = _list_create_node(elem);
-	if (self->first == NULL || compare(self->first->elem, elem) < 0) {
-		ret->tail = self->first;
-		self->first = ret;
-		status = 1;
-	} else {
-		struct node *aux = self->first;
-		while (aux != NULL && !status) {
-			if (compare(aux->elem, elem) == 0) {
-				ifequal(aux->elem, elem);
-				status = 2;
-			} else if (aux->tail == NULL || compare(aux->tail->elem, elem) < 0) {
-				ret->tail = aux->tail;
-				aux->tail = ret;
-				status = 1;
+	code = _list_create_node(&ret, elem);
+
+	if (code == NOE) {
+		char ready = 0;
+
+		if (self->first == NULL || compare(self->first->elem, elem) < 0) {
+			ret->tail = self->first;
+			self->first = ret;
+			code = I_ADDED;
+		} else {
+			struct node *aux = self->first;
+
+			while (aux != NULL && !ready) {
+				if (compare(aux->elem, elem) == 0) {
+					ifequal(aux->elem, elem);
+					code = I_UPDATED;
+					ready = 1;
+				} else if (aux->tail == NULL || compare(aux->tail->elem, elem) < 0) {
+					ret->tail = aux->tail;
+					aux->tail = ret;
+					code = I_ADDED;
+					ready = 1;
+				}
+				aux = aux->tail;
 			}
-			aux = aux->tail;
 		}
+
+		if (code != I_ADDED)
+			free(ret);
 	}
 
-	if (status != 1)
-		free(ret);
-
-	return status;
+	return code;
 }
 
 void
@@ -95,27 +104,31 @@ list_order(List self, ListOrderBy orderby)
 {
 }
 
-Matrix
-list_tomatrix(List self, ListToString tostring, unsigned int *rows)
+ErrorCodes
+list_tomatrix(List self, Matrix *mat, ListToString tostring, unsigned int *rows)
 {
-	Matrix mat = NULL;
-	char error = 0;
+	ErrorCodes code = NOE;
+	char **row;
 	*rows = 0;
 
-	for (struct node *aux = self->first; aux != NULL && !error; aux = aux->tail) {
+	for (struct node *aux = self->first; aux != NULL && code == NOE; aux = aux->tail) {
 		if (*rows % BLOCK == 0) {
-			mat = realloc(mat, (*rows + BLOCK) * sizeof(char**));
+			*mat = realloc(*mat, (*rows + BLOCK) * sizeof(char**));
 			if (errno == ENOMEM) {
 				log_error("No hay memoria suficiente");
-				error = 0;
+				code = E_NOMEM;
 			}
 		}
-		if (!error)
-			mat[(*rows)++] = tostring(aux->elem);
+		if (code != E_NOMEM) {
+			code = tostring(&row, aux->elem);
+			(*mat)[(*rows)++] = row;
+		}
 	}
-	mat = realloc(mat, *rows * sizeof(char**));
+	*mat = realloc(*mat, *rows * sizeof(char**));
 
-	return mat;
+	if (errno == ENOMEM)
+		return E_NOMEM;
+	return code;
 }
 
 void
