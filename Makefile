@@ -1,8 +1,9 @@
 CC=gcc
 CFLAGS=-std=c99 -pedantic -Wall
 CFLAGS+=-Iinclude
-LDFLAGS=-fsanitize=address
-DBGFLAGS=-g -DDEBUG=1
+LDFLAGS=
+DBGLFLAGS=-fsanitize=address
+DBGCFLAGS=-g -DDEBUG=1
 
 DBG=0
 OUT=build
@@ -11,7 +12,8 @@ SRC=$(wildcard src/*.c)
 OBJ=$(patsubst src/%.c,$(OUT)/%.o,$(SRC))
 
 ifeq ($(DBG), 1)
-	CFLAGS+=$(DBGFLAGS)
+	CFLAGS+=$(DBGCFLAGS)
+	LDFLAGS+=$(DBGLFLAGS)
 endif
 
 .PHONY: build run clean
