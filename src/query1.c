@@ -29,6 +29,8 @@ _ifequal(struct query1 *e1, struct query1 *e2)
 static int
 _orderby(struct query1 *e1, struct query1 *e2)
 {
+	// al ordenar la lista quiero que se ordene descendentemente por count pero
+	// si empatan por count, que desempaten por orden alfabetico del nombre
 	int n = e1->count - e2->count;
 	if (n == 0)
 		return strcmp(e2->name, e1->name);
@@ -61,6 +63,9 @@ query1_new()
 ErrorCodes
 query1_add(Query1 self, unsigned int id, char *name, unsigned int count)
 {
+	if (self == NULL)
+		return E_EMPLIST;
+
 	ErrorCodes code;
 	struct query1 *q = malloc(sizeof(struct query1));
 
@@ -70,7 +75,7 @@ query1_add(Query1 self, unsigned int id, char *name, unsigned int count)
 	q->name = name;
 	q->count = count;
 	q->id = id;
-	code = list_add( self, q, (ListCmp)_compare, (ListIfEqual)_ifequal);
+	code = list_add(self, q, (ListCmp)_compare, (ListIfEqual)_ifequal);
 
 	if (code == I_UPDATED)
 		free(q);

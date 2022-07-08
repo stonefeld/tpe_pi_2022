@@ -51,6 +51,8 @@ Luego de completada la compilación el programa puede ejecutarse de la siguiente
 build/pedestrians readings.csv sensors.csv
 ```
 
+Donde de forma obligatoria, el primer archivo, debe contener la información de las lecturas realizadas y el segundo la información de cada uno de los sensores. Caso contrario el programa cerrará.
+
 ## Funcionamiento
 
 Al ejecutar el programa con los parametros correspondientes, el mismo realizará un parseo de todos los datos de los archivos correspondientes y realizará una serie de **queries** cuyos resultados serán almacenados en archivos con nombres acordes.

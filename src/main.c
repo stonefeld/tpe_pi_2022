@@ -1,6 +1,3 @@
-#include <ctype.h>
-#include <stdio.h>
-
 #include "pedestrians.h"
 
 /*
@@ -164,6 +161,9 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 	}
 	fclose(f);
 
+	status = sensors_order(s);
+	status = log_code(status);
+
 	if (!(f = fopen(readings_path, "r")))
 		return E_NOFILE;
 
@@ -208,13 +208,20 @@ main(int argc, char **argv)
 		return -1;
 	}
 
+	// Inicializamos los sensores y los readings que contiene a los queries
 	ErrorCodes code = 0;
 	Sensors s = sensors_new();
 	Readings r = readings_new((unsigned int[]){ 1, 2, 3 }, 3);
 
+	// Agregamos de ambos archivos cada uno de los datos correspondientes
 	code = read_files(s, r, argv[2], argv[1]);
+
+	// En caso de algun error o warning relevalte que se imprima e indique
+	// si es un ERROR, un WARN o un NOE (no error)
 	code = log_code(code);
 
+	// Creamos las matrices de las correspondientes queries solicitadas y
+	// traspasamos los datos de las mismas a archivos csv
 	unsigned int rows, cols;
 	Matrix q1 = NULL;
 	code = readings_get_matrix(r, &q1, 1, &rows, &cols);
@@ -237,9 +244,12 @@ main(int argc, char **argv)
 		dump_to_csv("query3.csv", q3, rows, cols, "day;day_counts;night_counts;total_counts");
 	readings_free_matrix(q3, rows, cols);
 
+	// Liberamos toda la memoria utilizada
 	sensors_free(s);
 	readings_free(r);
 
+	// Y finalizamos el programa con el codigo final. Si no hubo errores
+	// retorna 0, caso contrario -1
 	if (code != NOE)
 		return -1;
 	return 0;

@@ -50,6 +50,9 @@ query2_new()
 ErrorCodes
 query2_add(Query2 self, unsigned int year, unsigned int count)
 {
+	if (self == NULL)
+		return E_EMPLIST;
+
 	ErrorCodes code;
 	struct query2 *q = malloc(sizeof(struct query2));
 

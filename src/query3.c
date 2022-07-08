@@ -59,6 +59,9 @@ query3_new()
 ErrorCodes
 query3_add(Query3 self, char* day, unsigned short nday, unsigned int count, unsigned short time)
 {
+	if (self == NULL)
+		return E_EMPLIST;
+
 	ErrorCodes code;
 	struct query3 *q = malloc(sizeof(struct query3));
 

@@ -17,10 +17,8 @@ static ErrorCodes
 _list_create_node(struct node **ret, void *elem)
 {
 	*ret = malloc(sizeof(struct node));
-	if (errno == ENOMEM) {
-		log_error("No hay suficiente memoria");
+	if (errno == ENOMEM)
 		return E_NOMEM;
-	}
 	(*ret)->elem = elem;
 	(*ret)->tail = NULL;
 	return NOE;
@@ -30,10 +28,8 @@ List
 list_new()
 {
 	List ret = calloc(1, sizeof(struct list_adt));
-	if (errno == ENOMEM) {
-		log_error("No hay suficiente memoria");
+	if (errno == ENOMEM)
 		return NULL;
-	}
 	return ret;
 }
 
