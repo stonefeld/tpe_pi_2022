@@ -2,7 +2,6 @@
 #define __PEDESTRIANS_H__
 
 #include "logger.h"
-#include "parser.h"
 #include "readings.h"
 #include "sensors.h"
 #include "utils.h"

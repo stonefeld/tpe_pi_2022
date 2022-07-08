@@ -69,7 +69,7 @@ query3_add(Query3 self, char* day, unsigned short nday, unsigned int count, unsi
 	q->nday = nday;
 	q->count = count;
 
-	if (time >= 6 && time < 18){
+	if (time >= 6 && time < 18) {
 		q->day_count = count;
 		q->night_count = 0;
 	} else {
@@ -99,15 +99,4 @@ void
 query3_free(Query3 self)
 {
 	list_free(self);
-}
-
-void
-query3_print(Query3 self)
-{
-	struct query3 *n;
-	list_begin(self);
-	while (list_hasnext(self)) {
-		n = list_next(self);
-		printf("%10.10s\t%d\t%d\t%d\n", n->day, n->day_count, n->night_count, n->count);
-	}
 }

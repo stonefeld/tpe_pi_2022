@@ -1,8 +1,7 @@
 CC=gcc
 CFLAGS=-std=c99 -pedantic -Wall
 CFLAGS+=-Iinclude
-LDFLAGS=
-DBGLFLAGS=-fsanitize=address
+LDFLAGS=-fsanitize=address
 DBGCFLAGS=-g -DDEBUG=1
 
 DBG=0
@@ -13,7 +12,6 @@ OBJ=$(patsubst src/%.c,$(OUT)/%.o,$(SRC))
 
 ifeq ($(DBG), 1)
 	CFLAGS+=$(DBGCFLAGS)
-	LDFLAGS+=$(DBGLFLAGS)
 endif
 
 .PHONY: build run clean

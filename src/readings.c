@@ -18,7 +18,6 @@ readings_new(unsigned int *queries, unsigned int count)
 	self->queries = queries;
 	self->count = count;
 
-	// TODO(ts): cambiar para el default a un codigo de error.
 	for (int i = 0; i < count; i++) {
 		switch (queries[i]) {
 			case 1: self->query1 = query1_new(); break;
@@ -48,7 +47,6 @@ ErrorCodes
 readings_get_matrix(Readings self, Matrix *mat, unsigned int query, unsigned int *rows, unsigned int *cols)
 {
 	ErrorCodes code;
-
 	switch (query) {
 		case 1: code = query1_tomatrix(self->query1, mat, rows, cols); break;
 		case 2: code = query2_tomatrix(self->query2, mat, rows, cols); break;
@@ -77,16 +75,4 @@ readings_free_matrix(Matrix mat, unsigned int rows, unsigned int cols)
 	if (mat == NULL)
 		return;
 	list_free_matrix(mat, rows, cols);
-}
-
-void
-readings_print(Readings self)
-{
-	for (int i = 0; i < self->count; i++) {
-		switch (self->queries[i]) {
-			case 1: query1_print(self->query1); break;
-			case 2: query2_print(self->query2); break;
-			case 3: query3_print(self->query3); break;
-		}
-	}
 }

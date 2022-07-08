@@ -81,14 +81,3 @@ query2_free(Query2 self)
 {
 	list_free(self);
 }
-
-void
-query2_print(Query2 self)
-{
-	struct query2 *n;
-	list_begin(self);
-	while (list_hasnext(self)) {
-		n = list_next(self);
-		printf("%d\t%d\n", n->year, n->count);
-	}
-}

@@ -13,11 +13,30 @@ struct sensors_adt {
 	struct sensor *first;
 };
 
-static ErrorCodes _sensors_add(Sensors self, unsigned int id, char *name);
 static ErrorCodes _sensors_create_node(struct sensor **ret, unsigned int id, char *name);
 
 static ErrorCodes
-_sensors_add(Sensors self, unsigned int id, char *name)
+_sensors_create_node(struct sensor **ret, unsigned int id, char *name)
+{
+	*ret = malloc(sizeof(struct sensor));
+	if (errno == ENOMEM)
+		return E_NOMEM;
+
+	(*ret)->id = id;
+	(*ret)->name = malloc(strlen(name) + 1);
+	strcpy((*ret)->name, name);
+	(*ret)->tail = NULL;
+	return NOE;
+}
+
+Sensors
+sensors_new()
+{
+	return calloc(1, sizeof(struct sensors_adt));
+}
+
+ErrorCodes
+sensors_add(Sensors self, unsigned int id, char *name)
 {
 	ErrorCodes code;
 	struct sensor *ret;
@@ -26,6 +45,7 @@ _sensors_add(Sensors self, unsigned int id, char *name)
 
 	if (code == NOE) {
 		char ready = 0;
+		code = W_NOTADD;
 
 		if (self->first == NULL || self->first->id > id) {
 			ret->tail = self->first;
@@ -55,34 +75,6 @@ _sensors_add(Sensors self, unsigned int id, char *name)
 	return code;
 }
 
-static ErrorCodes
-_sensors_create_node(struct sensor **ret, unsigned int id, char *name)
-{
-	*ret = malloc(sizeof(struct sensor));
-	if (errno == ENOMEM)
-		return E_NOMEM;
-
-	(*ret)->id = id;
-	(*ret)->name = malloc(strlen(name) + 1);
-	strcpy((*ret)->name, name);
-	(*ret)->tail = NULL;
-	return NOE;
-}
-
-Sensors
-sensors_new()
-{
-	return calloc(1, sizeof(struct sensors_adt));
-}
-
-int
-sensors_add(Sensors self, unsigned int id, char *name)
-{
-	if (_sensors_add(self, id, name))
-		return NOE;
-	return W_NOTADD;
-}
-
 int
 sensors_exists(Sensors self, unsigned int id)
 {
@@ -100,8 +92,6 @@ sensors_get_name(Sensors self, unsigned int id, char **name)
 {
 	int exists = 0;
 
-	// TODO(ts): pensar si conviene pasar el puntero al nombre o hacer una
-	// copia del mismo como retorno
 	for (struct sensor *aux = self->first; aux != NULL && !exists; aux = aux->tail) {
 		if (aux->id == id) {
 			*name = aux->name;
@@ -123,14 +113,4 @@ sensors_free(Sensors self)
 		free(aux);
 	}
 	free(self);
-}
-
-// TODO(ts): borrar al final del proyecto
-void
-sensors_print(Sensors self)
-{
-#if DEBUG
-	for (struct sensor *aux = self->first; aux != NULL; aux = aux->tail)
-		printf("%d - %s\n", aux->id, aux->name);
-#endif
 }

@@ -9,7 +9,6 @@ struct node {
 
 struct list_adt {
 	struct node *first;
-	struct node *iter;
 };
 
 static ErrorCodes _list_create_node(struct node **ret, void *elem);
@@ -76,26 +75,6 @@ list_add(List self, void *elem, ListCmp compare, ListIfEqual ifequal)
 	}
 
 	return code;
-}
-
-void
-list_begin(List self)
-{
-	self->iter = self->first;
-}
-
-int
-list_hasnext(List self)
-{
-	return self->iter != NULL;
-}
-
-void*
-list_next(List self)
-{
-	void *e = self->iter->elem;
-	self->iter = self->iter->tail;
-	return e;
 }
 
 void

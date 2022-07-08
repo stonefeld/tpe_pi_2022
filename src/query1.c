@@ -94,14 +94,3 @@ query1_free(Query1 self)
 {
 	list_free(self);
 }
-
-void
-query1_print(Query1 self)
-{
-	struct query1 *n;
-	list_begin(self);
-	while (list_hasnext(self)) {
-		n = list_next(self);
-		printf("%d\t%20.20s\t%d\n", n->id, n->name, n->count);
-	}
-}

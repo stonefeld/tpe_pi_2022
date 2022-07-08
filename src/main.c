@@ -6,8 +6,9 @@
 #define WEEKDAYS 7
 
 void dump_to_csv(char *filename, Matrix query, unsigned int rows, unsigned int cols, char *header);
-ErrorCodes read_files(Sensors s, Readings r, const char *sensors_path, const char *readings_path);
 unsigned short get_nday(char *day);
+void parser_get(char *stream, const char *delim, unsigned int *keys, char **tokens, unsigned int dim);
+ErrorCodes read_files(Sensors s, Readings r, const char *sensors_path, const char *readings_path);
 
 void
 dump_to_csv(char *filename, Matrix query, unsigned int rows, unsigned int cols, char *header)
@@ -35,6 +36,21 @@ get_nday(char *day)
 		if (strcmp(day, days[i]) == 0)
 			nday = i;
 	return nday;
+}
+
+void
+parser_get(char *stream, const char *delim, unsigned int *keys, char **tokens, unsigned int dim)
+{
+	char *token;
+
+	*keys = 0;
+	token = strtok(stream, delim);
+
+	while (dim > 0 && token != NULL) {
+		tokens[(*keys)++] = token;
+		token = strtok(NULL, delim);
+		dim--;
+	}
 }
 
 ErrorCodes
@@ -118,8 +134,6 @@ main(int argc, char **argv)
 
 	code = read_files(s, r, argv[2], argv[1]);
 	code = log_code(code);
-	// sensors_print(s);
-	// readings_print(r);
 
 	unsigned int rows, cols;
 	Matrix q1 = NULL;
@@ -142,8 +156,6 @@ main(int argc, char **argv)
 	if (code == NOE)
 		dump_to_csv("query3.csv", q3, rows, cols, "day;day_counts;night_counts;total_counts");
 	readings_free_matrix(q3, rows, cols);
-
-	// readings_print(r);
 
 	sensors_free(s);
 	readings_free(r);
