@@ -161,9 +161,6 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 	}
 	fclose(f);
 
-	status = sensors_order(s);
-	status = log_code(status);
-
 	if (!(f = fopen(readings_path, "r")))
 		return E_NOFILE;
 

@@ -22,16 +22,6 @@ Sensors sensors_new(void);
 ErrorCodes sensors_add(Sensors self, unsigned int id, char *name);
 
 /*
- * Genera dentro del TAD un vector donde cada indice representa el vector. Los
- * vectores existentes ocuparan un espacio mientras que los que no quedaran en
- * NULL. Es posible no utilizar la funcion, y las funciones de busqueda
- * seguiran funcionando de la manera tradicional de busqueda de listas.
- * @param: self: el puntero al TAD a ser modificado
- * @return: un codigo de error el cual al no haber error es NOE
- */
-ErrorCodes sensors_order(Sensors self);
-
-/*
  * Retorna 1 si el sensor existe y 0 si no existe, recibiendo el id del sensor
  * a encontrar. En caso de que exista devuelve el nombre del sensor en la
  * puntero pasado como argumento (No devuelve una copia del mismo).
