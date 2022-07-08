@@ -8,5 +8,6 @@
 #define QUERY3_COLS 4
 #define YEAR_LEN 5
 #define DAYS_LEN 10
+// #define TRACE
 
 #endif // __CONFIG_H__

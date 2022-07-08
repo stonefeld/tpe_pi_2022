@@ -4,9 +4,8 @@
 #include "utils.h"
 
 void
-parser_get(char *stream, unsigned int *keys, char **tokens, unsigned int dim)
+parser_get(char *stream, const char *delim, unsigned int *keys, char **tokens, unsigned int dim)
 {
-	char delim[2] = ";";
 	char *token;
 
 	*keys = 0;

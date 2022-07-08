@@ -1,6 +1,5 @@
 #include "config.h"
 #include "logger.h"
-#include "parser.h"
 #include "readings.h"
 #include "utils.h"
 
@@ -49,19 +48,12 @@ ErrorCodes
 readings_get_matrix(Readings self, Matrix *mat, unsigned int query, unsigned int *rows, unsigned int *cols)
 {
 	ErrorCodes code;
-	char exists = 0;
-
-	for (int i = 0; i < self->count && !exists; i++)
-		if (self->queries[i] == query)
-			exists = 1;
-
-	if (!exists)
-		return W_NOQUERY;
 
 	switch (query) {
 		case 1: code = query1_tomatrix(self->query1, mat, rows, cols); break;
 		case 2: code = query2_tomatrix(self->query2, mat, rows, cols); break;
 		case 3: code = query3_tomatrix(self->query3, mat, rows, cols); break;
+		default: code = W_NOQUERY; break;
 	}
 	return code;
 }

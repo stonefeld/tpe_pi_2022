@@ -8,7 +8,7 @@ typedef void (*ListIfEqual)(void *e1, void *e2);
 typedef ErrorCodes (*ListToString)(char ***ret, void *e);
 typedef int (*ListOrderBy)(void *e1, void *e2);
 typedef struct list_adt *List;
-typedef char*** Matrix;
+typedef char ***Matrix;
 
 List list_new(void);
 ErrorCodes list_add(List self, void *elem, ListCmp compare, ListIfEqual ifequal);

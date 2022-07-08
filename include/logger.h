@@ -1,8 +1,6 @@
 #ifndef __LOGGER_H__
 #define __LOGGER_H__
 
-// #define TRACE
-
 typedef enum {
 	NOE = 0,   WARN,      ERROR,
 	E_BADARGS, E_NOFILE,  E_NOMEM,

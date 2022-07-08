@@ -1,8 +1,4 @@
-#include "logger.h"
-#include "parser.h"
-#include "readings.h"
-#include "sensors.h"
-#include "utils.h"
+#include "pedestrians.h"
 
 #define STREAM_LEN 1024
 #define SENSORS_KEYS 3
@@ -22,7 +18,7 @@ dump_to_csv(char *filename, Matrix query, unsigned int rows, unsigned int cols, 
     f = fopen(filename, "w+");
 	fprintf(f, "%s\n", header);
 
-    for (int i = 0; i < rows; i++){
+    for (int i = 0; i < rows; i++) {
         for (j = 0; j < cols - 1; j++)
             fprintf(f, "%s;", query[i][j]);
         fprintf(f, "%s\n", query[i][j]);
@@ -46,9 +42,13 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 {
 	char stream[STREAM_LEN];
 	char *tokens_sensors[SENSORS_KEYS], *tokens_readings[READINGS_KEYS];
-	ErrorCodes status = 0;
 	unsigned int keys;
+	ErrorCodes status = 0;
 	FILE *f;
+
+	char *name, *day, delim[2] = ";";
+	unsigned short time, nday;
+	unsigned int id, year, count;
 
 	if (!(f = fopen(sensors_path, "r")))
 		return E_NOFILE;
@@ -56,14 +56,14 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 	// nos salteamos la primer linea con los headers
 	fgets(stream, STREAM_LEN, f);
 	while (status != ERROR && fgets(stream, STREAM_LEN, f) != NULL) {
-		parser_get(stream, &keys, tokens_sensors, SENSORS_KEYS);
+		parser_get(stream, delim, &keys, tokens_sensors, SENSORS_KEYS);
 
 		// verifico que la cantidad de columnas sea la correcta y que el status del
 		// sensor sea activo, sino no lo agrego.
 		if (keys == SENSORS_KEYS) {
 			if (tokens_sensors[2][0] == 'A') {
-				char *name = tokens_sensors[1];
-				unsigned int id = atoi(tokens_sensors[0]);
+				name = tokens_sensors[1];
+				id = atoi(tokens_sensors[0]);
 
 				status = sensors_add(s, id, name);
 				status = log_code(status);
@@ -80,20 +80,17 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 	// nos salteamos la primer linea con los headers
 	fgets(stream, STREAM_LEN, f);
 	while (status != ERROR && fgets(stream, STREAM_LEN, f) != NULL) {
-		parser_get(stream, &keys, tokens_readings, READINGS_KEYS);
+		parser_get(stream, delim, &keys, tokens_readings, READINGS_KEYS);
 
-		// verifico que la cantidad de columnas sea la correcta y que el status del
-		// sensor sea activo, sino no lo agrego.
 		if (keys == READINGS_KEYS) {
-			char *name;
-			unsigned int id = atoi(tokens_readings[4]);
+			id = atoi(tokens_readings[4]);
 
 			if (sensors_get_name(s, id, &name)) {
-				char *day = tokens_readings[3];
-				unsigned short time = atoi(tokens_readings[5]);
-				unsigned short nday = get_nday(day);
-				unsigned int year = atoi(tokens_readings[0]);
-				unsigned int count = atoi(tokens_readings[6]);
+				day = tokens_readings[3];
+				time = atoi(tokens_readings[5]);
+				nday = get_nday(day);
+				year = atoi(tokens_readings[0]);
+				count = atoi(tokens_readings[6]);
 
 				status = readings_add(r, id, name, year, day, nday, time, count);
 				status = log_code(status);
@@ -117,7 +114,7 @@ main(int argc, char **argv)
 
 	ErrorCodes code = 0;
 	Sensors s = sensors_new();
-	Readings r = readings_new((unsigned int[]){ 1, 2, 3 }, 3);
+	Readings r = readings_new((unsigned int[]){ 1, 2, 3 }, 2);
 
 	code = read_files(s, r, argv[2], argv[1]);
 	code = log_code(code);

@@ -1,3 +1,4 @@
+#include "config.h"
 #include "logger.h"
 #include "utils.h"
 
@@ -47,16 +48,16 @@ log_code(ErrorCodes code)
 	};
 
 	switch (code) {
-		case NOE:
 		case I_UPDATED:
 		case I_ADDED: {
-#if DEBUG && TRACE
+#if DEBUG
+#ifdef TRACE
 			log_trace(logs[code - ERROR - 1]);
+#endif
 #endif
 			code = NOE;
 		} break;
 
-		case ERROR:
 		case E_BADARGS:
 		case E_NOFILE:
 		case E_NOMEM:
@@ -65,13 +66,14 @@ log_code(ErrorCodes code)
 			code = ERROR;
 		} break;
 
-		case WARN:
 		case W_NOTADD:
 		case W_BADKEYS:
 		case W_NOQUERY: {
 			log_warn(logs[code - ERROR - 1]);
 			code = WARN;
 		} break;
+
+		default: break;
 	}
 
 	return code;

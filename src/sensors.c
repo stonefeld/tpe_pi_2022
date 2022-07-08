@@ -1,6 +1,5 @@
 #include "config.h"
 #include "logger.h"
-#include "parser.h"
 #include "sensors.h"
 #include "utils.h"
 
