@@ -1,36 +1,75 @@
 #include "pedestrians.h"
 
+/*
+ * Tamanio del buffer de lectura para cada linea de los archivos leidos. En
+ * caso de requerirse mayor tamanio se agranda STREAM_LEN.
+ */
 #define STREAM_LEN 1024
+
+/*
+ * La cantidad de 'keys', 'tokens' o columnas esperadas por el archivo de
+ * sensores.
+ */
 #define SENSORS_KEYS 3
+
+/*
+ * La cantidad de 'keys', 'tokens' o columnas esperadas por el archivo de
+ * readings.
+ */
 #define READINGS_KEYS 7
+
+/*
+ * La cantidad de dias que tiene la semana.
+ */
 #define WEEKDAYS 7
 
+/*
+ * Traspasa los datos de cada celda de la matriz a un archivo de tipo csv,
+ * donde cada columna esta separada por un ';'
+ */
 void dump_to_csv(char *filename, Matrix query, unsigned int rows, unsigned int cols, char *header);
+
+/*
+ * Recibe el nombre del dia la semana (en ingles pues son recibidos del .csv en
+ * ese idioma) y devuelve el numero del dia de la semana corresponiente.
+ */
 unsigned short get_nday(char *day);
+
+/*
+ * Recibe un stream de datos, un delimitador especifico y un vector de strings
+ * donde se almacenaran los punteros a cada una de los 'tokens' o 'keys' del
+ * stream separados por el delimitador especificado.
+ */
 void parser_get(char *stream, const char *delim, unsigned int *keys, char **tokens, unsigned int dim);
+
+/*
+ * Lee los archivos de readings.csv y sensors.csv, procesando cada linea del
+ * mismo y enviandolo al backend para ser procesado por el motor de queries
+ * especificado.
+ */
 ErrorCodes read_files(Sensors s, Readings r, const char *sensors_path, const char *readings_path);
 
 void
 dump_to_csv(char *filename, Matrix query, unsigned int rows, unsigned int cols, char *header)
 {
 	int j;
-    FILE *f;
+	FILE *f;
 
-    f = fopen(filename, "w+");
+	f = fopen(filename, "w+");
 	fprintf(f, "%s\n", header);
 
-    for (int i = 0; i < rows; i++) {
-        for (j = 0; j < cols - 1; j++)
-            fprintf(f, "%s;", query[i][j]);
-        fprintf(f, "%s\n", query[i][j]);
-    }
-    fclose(f);
+	for (int i = 0; i < rows; i++) {
+		for (j = 0; j < cols - 1; j++)
+			fprintf(f, "%s;", query[i][j]);
+		fprintf(f, "%s\n", query[i][j]);
+	}
+	fclose(f);
 }
 
 unsigned short
 get_nday(char *day)
 {
-    char *days[WEEKDAYS] = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+	char *days[WEEKDAYS] = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
 	int nday = 0;
 	for (int i = 0; i < WEEKDAYS; i++)
 		if (strcmp(day, days[i]) == 0)
@@ -71,6 +110,9 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 
 	// nos salteamos la primer linea con los headers
 	fgets(stream, STREAM_LEN, f);
+	if (strcmp(stream, "Sensor_ID;Name;Status\n") != 0)
+		return E_NOFILE;
+
 	while (status != ERROR && fgets(stream, STREAM_LEN, f) != NULL) {
 		parser_get(stream, delim, &keys, tokens_sensors, SENSORS_KEYS);
 
@@ -95,6 +137,9 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 
 	// nos salteamos la primer linea con los headers
 	fgets(stream, STREAM_LEN, f);
+	if (strcmp(stream, "Year;Month;Mdate;Day;Sensor_ID;Time;Hourly_Counts\n") != 0)
+		return E_NOFILE;
+
 	while (status != ERROR && fgets(stream, STREAM_LEN, f) != NULL) {
 		parser_get(stream, delim, &keys, tokens_readings, READINGS_KEYS);
 
