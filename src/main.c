@@ -1,4 +1,12 @@
+#include <ctype.h>
+#include <stdio.h>
+
 #include "pedestrians.h"
+
+/*
+ * La cantidad de argumentos que se espera recibir por linea de comandos.
+ */
+#define EXPECTED_ARGS 3
 
 /*
  * Tamanio del buffer de lectura para cada linea de los archivos leidos. En
@@ -24,21 +32,40 @@
 #define WEEKDAYS 7
 
 /*
+ * Posicion de las correspondientes columnas en los archivos de sensors
+ * y readings
+ */
+enum sensor_keys_ind { S_ID = 0, NAME, STATUS };
+enum readings_keys_ind { YEAR = 0, MONTH, MDATE, DAY, R_ID, TIME, COUNTS };
+
+/*
  * Traspasa los datos de cada celda de la matriz a un archivo de tipo csv,
- * donde cada columna esta separada por un ';'
+ * donde cada columna esta separada por un ';'.
+ * @param: filename: nombre del archivo donde se guardan los datos
+ * @param: query: la matriz de strings con los datos a meter en el archivo
+ * @param: rows: la cantidad de filas que tiene la matriz
+ * @param: cols: la cantidad de columnas que tiene la matriz
+ * @param: header: el titulo de las columnas del csv
  */
 void dump_to_csv(char *filename, Matrix query, unsigned int rows, unsigned int cols, char *header);
 
 /*
  * Recibe el nombre del dia la semana (en ingles pues son recibidos del .csv en
  * ese idioma) y devuelve el numero del dia de la semana corresponiente.
+ * @param: day: el nombre del dia
+ * @return: el numero al que le corresponde el dia en la semana
  */
-unsigned short get_nday(char *day);
+short get_nday(char *day);
 
 /*
  * Recibe un stream de datos, un delimitador especifico y un vector de strings
  * donde se almacenaran los punteros a cada una de los 'tokens' o 'keys' del
  * stream separados por el delimitador especificado.
+ * @param: stream: el stream de datos obtenidos del archivo
+ * @param: delim: el delimitador de cada token del stream
+ * @param: keys: la cantidad de tokens encontrados
+ * @param: tokens: donde se guardan los punteros a los tokens
+ * @param: dim: la cantidad de tokens que se espera encontrar
  */
 void parser_get(char *stream, const char *delim, unsigned int *keys, char **tokens, unsigned int dim);
 
@@ -46,6 +73,10 @@ void parser_get(char *stream, const char *delim, unsigned int *keys, char **toke
  * Lee los archivos de readings.csv y sensors.csv, procesando cada linea del
  * mismo y enviandolo al backend para ser procesado por el motor de queries
  * especificado.
+ * @param: s: el puntero al TAD de sensores
+ * @param: r: el puntero al TAD de readings
+ * @param: sensors_path: la ubicacion del archivos de sensors.csv
+ * @param: readings_path: la ubicacion del archivos de readings.csv
  */
 ErrorCodes read_files(Sensors s, Readings r, const char *sensors_path, const char *readings_path);
 
@@ -66,12 +97,12 @@ dump_to_csv(char *filename, Matrix query, unsigned int rows, unsigned int cols, 
 	fclose(f);
 }
 
-unsigned short
+short
 get_nday(char *day)
 {
 	char *days[WEEKDAYS] = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
-	int nday = 0;
-	for (int i = 0; i < WEEKDAYS; i++)
+	int nday = -1;
+	for (int i = 0; i < WEEKDAYS && nday == -1; i++)
 		if (strcmp(day, days[i]) == 0)
 			nday = i;
 	return nday;
@@ -102,7 +133,8 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 	FILE *f;
 
 	char *name, *day, delim[2] = ";";
-	unsigned short time, nday;
+	short nday;
+	unsigned short time;
 	unsigned int id, year, count;
 
 	if (!(f = fopen(sensors_path, "r")))
@@ -119,9 +151,9 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 		// verifico que la cantidad de columnas sea la correcta y que el status del
 		// sensor sea activo, sino no lo agrego.
 		if (keys == SENSORS_KEYS) {
-			if (tokens_sensors[2][0] == 'A') {
-				name = tokens_sensors[1];
-				id = atoi(tokens_sensors[0]);
+			if (tokens_sensors[STATUS][0] == 'A') {
+				name = tokens_sensors[NAME];
+				id = atoi(tokens_sensors[S_ID]);
 
 				status = sensors_add(s, id, name);
 				status = log_code(status);
@@ -144,17 +176,20 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 		parser_get(stream, delim, &keys, tokens_readings, READINGS_KEYS);
 
 		if (keys == READINGS_KEYS) {
-			id = atoi(tokens_readings[4]);
+			id = atoi(tokens_readings[R_ID]);
 
 			if (sensors_get_name(s, id, &name)) {
-				day = tokens_readings[3];
-				time = atoi(tokens_readings[5]);
+				day = tokens_readings[DAY];
 				nday = get_nday(day);
-				year = atoi(tokens_readings[0]);
-				count = atoi(tokens_readings[6]);
 
-				status = readings_add(r, id, name, year, day, nday, time, count);
-				status = log_code(status);
+				if (nday != -1) {
+					time = atoi(tokens_readings[TIME]);
+					year = atoi(tokens_readings[YEAR]);
+					count = atoi(tokens_readings[COUNTS]);
+
+					status = readings_add(r, id, name, year, day, nday, time, count);
+					status = log_code(status);
+				}
 			}
 		} else {
 			log_code(W_BADKEYS);
@@ -168,7 +203,7 @@ read_files(Sensors s, Readings r, const char *sensors_path, const char *readings
 int
 main(int argc, char **argv)
 {
-	if (argc != 3) {
+	if (argc != EXPECTED_ARGS) {
 		log_code(E_BADARGS);
 		return -1;
 	}

@@ -76,29 +76,15 @@ sensors_add(Sensors self, unsigned int id, char *name)
 }
 
 int
-sensors_exists(Sensors self, unsigned int id)
-{
-	int exists = 0;
-
-	for (struct sensor *aux = self->first; aux != NULL && !exists; aux = aux->tail)
-		if (aux->id == id)
-			exists = 1;
-
-	return exists;
-}
-
-int
 sensors_get_name(Sensors self, unsigned int id, char **name)
 {
 	int exists = 0;
-
 	for (struct sensor *aux = self->first; aux != NULL && !exists; aux = aux->tail) {
 		if (aux->id == id) {
 			*name = aux->name;
 			exists = 1;
 		}
 	}
-
 	return exists;
 }
 
