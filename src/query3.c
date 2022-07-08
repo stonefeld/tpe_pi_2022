@@ -69,7 +69,7 @@ query3_add(Query3 self, char* day, unsigned short nday, unsigned int count, unsi
 	q->nday = nday;
 	q->count = count;
 
-	if (time >= 6 && time <= 18){
+	if (time >= 6 && time < 18){
 		q->day_count = count;
 		q->night_count = 0;
 	} else {

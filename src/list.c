@@ -20,7 +20,6 @@ _list_create_node(struct node **ret, void *elem)
 	*ret = malloc(sizeof(struct node));
 	if (errno == ENOMEM) {
 		log_error("No hay suficiente memoria");
-		free(ret);
 		return E_NOMEM;
 	}
 	(*ret)->elem = elem;

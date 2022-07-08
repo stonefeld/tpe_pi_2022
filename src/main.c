@@ -30,7 +30,7 @@ unsigned short
 get_nday(char *day)
 {
     char *days[WEEKDAYS] = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
-	int nday;
+	int nday = 0;
 	for (int i = 0; i < WEEKDAYS; i++)
 		if (strcmp(day, days[i]) == 0)
 			nday = i;
@@ -114,7 +114,7 @@ main(int argc, char **argv)
 
 	ErrorCodes code = 0;
 	Sensors s = sensors_new();
-	Readings r = readings_new((unsigned int[]){ 1, 2, 3 }, 2);
+	Readings r = readings_new((unsigned int[]){ 1, 2, 3 }, 3);
 
 	code = read_files(s, r, argv[2], argv[1]);
 	code = log_code(code);
