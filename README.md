@@ -12,7 +12,7 @@
 
 ## Autores
 
-* Quian Blanco, Franciso - Legajo: **63006**
+* Quian Blanco, Francisco - Legajo: **63006**
 * Stanfield, Theo - Legajo: **63403**
 
 ## Objetivo
