@@ -17,7 +17,7 @@
 
 ## Objetivo
 
-El objetvio del proyecto es el diseño e implementación de un **programa de procesamiento de peatones**, realizando un programa completo que incluya _front-end_ y _back-end_, utilizando las herramientas aprendidas a lo largo de la cursada.
+El objetivo del proyecto es el diseño e implementación de un **programa de procesamiento de peatones**, realizando un programa completo que incluya _front-end_ y _back-end_, utilizando las herramientas aprendidas a lo largo de la cursada.
 
 ## Descripción
 
