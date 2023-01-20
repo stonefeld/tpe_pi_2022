@@ -2,18 +2,12 @@
 
 ## Tabla de contenidos
 
-* [Autores](#autores)
 * [Objetivo](#objetivo)
 * [Descripción](#descripción)
 * [Compilación](#compilación)
 * [Funcionamiento](#funcionamiento)
 * [Extendiendo las queries](#extendiendo-las-queries)
 * [Un extra](#un-extra)
-
-## Autores
-
-* Quian Blanco, Francisco - Legajo: **63006**
-* Stanfield, Theo - Legajo: **63403**
 
 ## Objetivo
 
